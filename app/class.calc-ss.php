@@ -647,42 +647,42 @@ class SeguroSaude {
     *    INSERT LEAD AND CREATE EMAILS
     *
     **********************************************/
-    // $result = self::manageDB('insert', $data, 'lead');
+    $result = self::manageDB('insert', $data, 'lead');
 
-    // if (isset($result['status'])) {
-    //   $subject = 'SS Plugin - Um novo lead se cadastrou no site';
-    //   $message = '<p>Um novo usuário se cadastrou no site. Faça o login no sistema para ver todos os detalhes.</p> 
-    //   <p>Abaixo o nome e o email: <br>
-    //   <b>Nome: </b>'.$parsed['ss-amb1-name'].' <br>
-    //   <b>Email: </b>'.$parsed['ss-amb1-email'].' <br>
-    //   </p><hr>
-    //   <p>
-    //   <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
-    //   </p>';
-    // } else {
-    //   $subject = 'Algum usuário tentou se cadastrar mas não conseguiu';
-    //   $message = '<p>O usuário'.$parsed['ss-amb1-name'].' tentou se cadastrar no site mas não conseguimos incluir no banco de dados.</p> 
-    //   <p>Abaixo está os dados do mesmo:
-    //   <b>nome: </b>'.$parsed['ss-amb1-name'].' <br>
-    //   <b>email: </b>'.$parsed['ss-amb1-email'].' <br>
-    //   <b>telefone: </b>'.$parsed['ss-amb1-phone'].' <br>
-    //   <b>adesao: </b>'.$parsed['ss-amb1-modalidades-categoria'].' <br>
-    //   <b>idades: </b>'.unserialize($parsed['ss-amb1-age']).'</p><hr>
-    //   <p>
-    //   <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
-    //   </p>';
-    // }
+    if (isset($result['status'])) {
+      $subject = 'SS Plugin - Um novo lead se cadastrou no site';
+      $message = '<p>Um novo usuário se cadastrou no site. Faça o login no sistema para ver todos os detalhes.</p> 
+      <p>Abaixo o nome e o email: <br>
+      <b>Nome: </b>'.$parsed['ss-amb1-name'].' <br>
+      <b>Email: </b>'.$parsed['ss-amb1-email'].' <br>
+      </p><hr>
+      <p>
+      <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
+      </p>';
+    } else {
+      $subject = 'Algum usuário tentou se cadastrar mas não conseguiu';
+      $message = '<p>O usuário'.$parsed['ss-amb1-name'].' tentou se cadastrar no site mas não conseguimos incluir no banco de dados.</p> 
+      <p>Abaixo está os dados do mesmo:
+      <b>nome: </b>'.$parsed['ss-amb1-name'].' <br>
+      <b>email: </b>'.$parsed['ss-amb1-email'].' <br>
+      <b>telefone: </b>'.$parsed['ss-amb1-phone'].' <br>
+      <b>adesao: </b>'.$parsed['ss-amb1-modalidades-categoria'].' <br>
+      <b>idades: </b>'.unserialize($parsed['ss-amb1-age']).'</p><hr>
+      <p>
+      <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
+      </p>';
+    }
     /**********************************************
     *
     *    SEND EMAILS
     *
     **********************************************/
-    // if (get_option('ss-amb1-sys-emails')) {
-    //   $to = get_option('ss-amb1-sys-emails');
-    // } else {
-    //   $to = get_bloginfo('admin_email');
-    // }
-    // wp_mail( $to, $subject, $message);
+    if (get_option('ss-amb1-sys-emails')) {
+      $to = get_option('ss-amb1-sys-emails');
+    } else {
+      $to = get_bloginfo('admin_email');
+    }
+    wp_mail( $to, $subject, $message);
     /**********************************************
     *
     *    DO THE CALCULATIONS

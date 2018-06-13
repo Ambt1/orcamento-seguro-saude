@@ -22,6 +22,8 @@ jQuery(document).ready(function($) {
         for (const plan of response.data) {
           let htmlBody = '';
           for (const modalidade of plan.modalidade) {
+            let totalCop = 0;
+            let totalNoCop = 0; 
             htmlBody += `<p class="hint">${modalidade.value}</p>
             <div class="features">
             <table class="ss-results--plan-prices" border="0" cellpadding="0" cellspacing="0">
@@ -34,6 +36,8 @@ jQuery(document).ready(function($) {
             </thead><tbody>`;
             for (let [key, age] of modalidade.ages.entries()) {
               if (modalidade.prices[key].price_cop > 0 && modalidade.prices[key].price_nocop > 0) {
+                totalCop = modalidade.prices[key].price_cop + totalCop;
+                totalNoCop = modalidade.prices[key].price_nocop + totalNoCop;
                 htmlBody += `<tr>
                 <td>${age.min} - ${age.max}</td>
                 <td>R$ ${parseFloat(modalidade.prices[key].price_cop).toFixed(2).replace('.',',')}</td>
@@ -41,10 +45,11 @@ jQuery(document).ready(function($) {
                 </tr>`;
               }
             }
-            htmlBody += `</tbody></table></div>`;
+            htmlBody += `</tbody>`;
+            htmlBody += `<tfoot class="pt-footer"><tr><td width="100px">Total:</td><td>R$ ${totalCop.toFixed(2).replace('.',',')}</td><td>R$ ${totalNoCop.toFixed(2).replace('.',',')}</td></tr></tfoot>`;
+            htmlBody += `</table></div>`;
           }
-
-          htmlPriceTable += `<div id="${plan.slug}" class="ss-results--plan form__response"><div class="title">${plan.name}</div>${htmlBody}<div class="pt-footer">&nbsp;</div></div>`;
+          htmlPriceTable += `<div id="${plan.slug}" class="ss-results--plan form__response"><div class="title">${plan.name}</div>${htmlBody}</div>`;
         }
         const html = `<div class="ss-amb1--form-results__wrapper"><h2 class="ss-amb1--results__title">Encontramos este(s) plano(s) para você.</h2><p class="ss-amb1--results__msg">${response.msg}</p>${htmlPriceTable}</div>`;
         $(".ss-amb1--form__wrapper").fadeOut('slow', function(){
