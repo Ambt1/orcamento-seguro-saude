@@ -1,0 +1,174 @@
+/**********************************************
+*
+*    Fonts
+*
+**********************************************/
+.ss-results--plan {
+  font-size: 16px;
+}
+
+.ss-results--plan .title,
+.ss-results--plan .pt-footer,
+.ss-results--plan .ss-results--plan-prices td,
+.ss-results--plan .ss-results--plan-prices th,
+.ss-results--plan .hint {
+  font-family: sans-serif;
+}
+
+.ss-results--plan .title {
+  font-size: 1.75em;
+}
+
+.ss-results--plan .pt-footer {
+  font-size: 1em;
+}
+
+.ss-results--plan .features {
+  font-size: 1em;
+}
+
+.ss-results--plan .ss-results--plan-prices {
+  font-size: .8em;
+}
+
+.ss-results--plan .hint {
+  font-size: 1em;
+}
+
+/**********************************************
+*
+*    Global
+*
+**********************************************/
+.ss-results--plan {
+  display: inline-block;
+  margin: 0 15px 15px;
+  overflow: hidden;
+
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  border: solid 1px #efefef;
+}
+
+.ss-results--plan .title,
+.ss-results--plan .pt-footer{
+  padding: 0;
+  margin: 0;
+  position: relative;
+
+  color: #FEFEFE;
+  text-align: center;
+  text-transform: capitalize;
+  line-height: 2.5;
+}
+
+.ss-results--plan .pt-footer{
+  line-height: 1;
+}
+
+.ss-results--plan .content{
+  position: relative;
+  color: #FEFEFE;
+  padding: 0;
+}
+/*arrow creation*/
+.ss-results--plan .hint::after{
+  top: 100%;
+  left: 50%;
+  border: solid transparent;
+  border-width: 5px;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.ss-results--plan .price{
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.625rem;
+}
+
+.ss-results--plan .price span{    
+  font-size: 6rem;
+  letter-spacing: 8px;
+  font-weight: bold;        
+}
+
+.ss-results--plan .price sup{
+  font-size: 1.5rem;    
+  position: absolute;    
+  top: 12px;
+  left: -12px;
+}
+
+.ss-results--plan .hint{
+  margin: 0;
+  padding:  1em;
+  position: relative;
+
+  font-style: italic;
+  text-align: center;
+}
+
+.ss-results--plan .features {
+  list-style-type: none;    
+  background: #FFFFFF;
+  text-align: left;
+  color: #9C9C9C;
+  padding: 15px 0 5px;
+}
+
+.ss-results--plan .ss-results--plan-prices {
+  margin: 0 0 1.5em 0;
+  width: 100%;
+
+  border-collapse: collapse;
+  border:  none;
+  font-style: normal;
+}
+
+.ss-results--plan .ss-results--plan-prices th,
+.ss-results--plan .ss-results--plan-prices td{
+  padding: .5em;
+
+  border:  none;
+  text-align: center;
+}
+
+.ss-results--plan .ss-results--plan-prices tr {
+  border-bottom:  1px solid #eee;  
+}
+
+.ss-results--plan .ss-results--plan-prices tbody tr:hover {
+  background-color: #eee;
+}
+
+.ss-results--plan .ss-results--plan-prices thead {
+  border-bottom: solid 2px #fefefe;
+}
+
+/**********************************************
+*
+*
+*    General Styles
+*
+*
+**********************************************/
+.form__response .title{
+  background: #78CFBF;    
+}
+.form__response .content,
+.form__response .hint,
+.form__response .pt-footer{
+  background: #82DACA;
+  color: #fff;
+}
+.form__response .hint:after{ 
+  border-top-color: #82DACA;  
+}
+.form__response .pt-footer:after{
+  border-top-color: #FFFFFF;
+} 

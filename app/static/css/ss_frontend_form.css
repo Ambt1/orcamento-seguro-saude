@@ -1,0 +1,131 @@
+/**********************************************
+*
+*
+*    Colors
+*
+*
+**********************************************/
+.ss-amb1--form__wrapper,
+.ss-amb1--form-results__wrapper {
+  background-color: #fff;
+}
+
+.ss-amb1-legend,
+.ss-amb1--results__title {
+  background-color: #686868;
+  color: #fff;
+  text-align: center;
+}
+
+.ss-amb1--form__wrapper .button-primary {
+  background-color: #686868;
+  border:  none;
+  color: #fff;
+  text-transform: uppercase;
+
+  border-radius: 0;
+  box-shadow: none;
+  text-shadow: none;
+  line-height: 1;
+  height: auto;
+}
+
+.ss-amb1--form__wrapper .button-primary:hover {
+  background-color: #686868;
+}
+
+/**********************************************
+*
+*
+*    Core Theme
+*
+*
+**********************************************/
+
+.ss-amb1--wrapper {
+  display: table;
+  position: relative;
+  width: 100%;
+}
+
+.ss-amb1--form__wrapper::after {
+  content: '';
+  display: table;
+  clear:  both;
+}
+
+.ss-amb1--form__wrapper,
+.ss-amb1--form-results__wrapper {
+  padding: 1em;
+}
+
+.ss-amb1-legend,
+.ss-amb1--results__title {
+  margin: 1em 0;
+  padding: .5em;
+}
+
+.ss-amb1--form__wrapper .button-primary {
+  margin-left: 1em;
+  margin-top: 1.5em;
+  padding: 1em;
+}
+
+/**********************************************
+*
+*    Ages Style
+*
+**********************************************/
+.ss-amb1--ages__wrapper {
+  clear: both;
+}
+
+.ss-amb1--ages__wrapper .ss-amb1-field__wrapper {
+  display: inline-block;
+  margin-left: 1em;
+  margin-right: 0 !important;
+  width: 22% !important;
+}
+
+.ss-amb1--ages__wrapper .ss-amb1-field__wrapper:first-child {
+  margin-left: 0;
+}
+
+/**********************************************
+*
+*    Fields Style
+*
+**********************************************/
+
+.ss-amb1-field__wrapper {
+  display: block;
+  float: left;
+  margin-bottom: .5em;
+  margin-top: .5em;
+  width: 50%;
+}
+
+.ss-amb1-field__wrapper:nth-child(even) {
+  margin-right: 1em;
+  width: calc(50% - 1em);
+}
+
+.ss-amb1-field__wrapper:nth-child(4n+1) {
+  margin-left: 0;
+}
+
+.ss-amb1-field__wrapper--block {
+  width:  100% !important;
+}
+
+.ss-amb1-field__wrapper input[type="text"],
+.ss-amb1-field__wrapper input[type="email"],
+.ss-amb1-field__wrapper input[type="tel"],
+.ss-amb1-field__wrapper input[type="number"],
+.ss-amb1-field__wrapper select,
+.ss-amb1-field__label {
+  display: block;
+  height: 2em;
+  margin: 0;
+  width:  100%;
+}

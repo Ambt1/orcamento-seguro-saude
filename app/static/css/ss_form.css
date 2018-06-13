@@ -1,0 +1,84 @@
+.postbox {
+  float:  left;
+  width:  48%;
+}
+
+.postbox:nth-child(even){
+  margin-left: 1.5%;
+  margin-right: 1.5%;
+}
+
+.postbox .large-text {
+  width: 75%;
+}
+
+.button-block {
+  display: block;
+  width:  100%;
+}
+
+.label--item {
+  display: block;
+  margin:  .5em auto;
+
+  text-align: center;
+}
+
+.add-plano .submit input {
+  width: 100%;
+}
+
+.ss-category--wrapper {
+  box-sizing: border-box;
+  float:  left;
+  padding: 0 1em 1em;
+  width:  50%;
+}
+
+.ss-category--cop {
+  background-color: #e1ffdb;
+}
+
+.ss-category--nocop {
+  background-color: #ddebff;
+}
+
+.ss-category--taxonomies {
+  clear:  both;
+  display: table;
+  margin-bottom: 1em;
+  margin-top: 1em;
+}
+
+.wrapper--item {
+  display: table;
+  width:  100%;
+}
+
+.checkbox {
+  margin: 0 1em;
+}
+
+.form--details__list {
+  font-size: 1em;
+}
+
+.form--details__list dt, 
+.form--details__list dd {
+  height: 30px;
+}
+
+.form--details__list dt {
+  font-weight: bold;
+}
+
+.form--details__list dd {
+  margin: 0;
+  padding: 0;
+}
+
+.form--adm--config {
+  height:  500px;
+  width:  100%;
+}
+

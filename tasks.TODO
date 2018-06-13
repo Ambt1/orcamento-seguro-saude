@@ -1,0 +1,57 @@
+Leads:
+ ✔ Fazer listagem de leads @done (18-05-23 15:26)
+ ✔ fazer detalhes de leads @done (18-05-23 15:26)
+ ✔ fazer botao de exportar csv de leads @done (18-05-26 20:06)
+ ✔ fazer botao de imprimir em detalhes de lead @done (18-05-23 18:14)
+ ✔ Inserir status por usuario @done (18-05-27 15:27)
+ ✔ Distribuir random por usuarios @done (18-05-27 15:55)
+ ✔ paginacao por usuarios @done (18-05-27 15:55)
+ ✔ deixar o aviso multiline @done (18-06-05 20:49)
+Plano:
+ ✔ fazer editar do plano @done (18-06-06 04:07)
+ ☐ loader entre os passos
+ ☐ Inserir imagem dos planos
+ ✔ gerar shortcode de cada plano @done (18-06-02 15:36)
+ ✔ layout da tabela de precos @done (18-06-02 17:21)
+ ✔ redirect pra listagem de plano @done (18-05-23 17:47)
+ ✔ avisar se nao tem modalidades @done (18-05-23 17:42)
+ ✔ Inserir aviso de status quando tudo tiver zerado @done (18-06-03 19:32)
+Formulario:
+ ✔ inserir o template do formulario dentro do codigo @done (18-06-03 19:26)
+ ☐ criar o drag n drop de formulario
+ ✔ inserir campo planos @done (18-06-03 20:06)
+ ✔ check se o template existe senao deixa quieto @done (18-06-05 20:44)
+Frontend:
+ ✔ fazer envio de email de formulario frontend @done (18-05-27 15:55)
+ ✔ fazer template do formulário @done (18-06-03 16:10)
+ ✔ fazer template do resultado @done (18-06-03 16:10)
+Categorias:
+  ✔ contagem de cada categorias (removido) @done (18-05-27 17:14)
+  ✔ editar categorias @done (18-05-27 17:14)
+Configs:
+ ✔ Endereços de email. @done (18-05-26 17:13)
+ ✔ criar virgula automaticamente @done (18-06-01 14:42)
+ ✔ mensagens do formulário. @done (18-05-23 19:27)
+ ✔ email de aviso de falha de cadastro de lead @done (18-05-26 18:23)
+ ✔ fazer area para personalizacao do template @done (18-06-03 19:19)
+ ☐ Criar uma area de mensagens voltada por usuario
+ ✔ Remover espaço do textarea de mensagens leads @done (18-06-05 20:43)
+ ✔ inserir o editor do wordpress para a resposta do suscesso dos leads @done (18-06-05 23:11)
+Modalidades:
+  ✔ mudar texto de "Adicionar nova categoria" para "Adicionar nova modalidade" @done (18-06-05 20:42)
+  ☐ 
+Bugs:
+ ☐ Em leads, arrumar bug de total mostrando na paginacao
+ ✔ Na ativação, ver pq nao ta criando a tabela logo de cara. @done (18-06-10 20:21)
+ ✔ Nao sei pq a resposta bugou no json de planos. VEeeeeeeja @done (18-06-10 20:07)
+ ✔ a 5 idade fica zuado @done (18-06-10 17:27)
+ ✔ Na edicao do produto nao da pra fazer replace de idade @done (18-06-10 20:06)
+ ✔ Preenchimento dos dados esta falhando @done (18-06-10 20:12)
+ ☐ Na primeira edição, problema para adicionar novo plano. 
+ ☐ No delete de idade e plano, nao esta deletando. 
+ ✔ Em planos, no editar: modalidades volta tudo checado no editar @done (18-06-06 04:07)
+ ✔ Formulário esta trazendo mais planos do que deveria @done (18-06-03 20:06)
+ ✔ Formulário nao esta trazendo TODAS as categorias por modalidade @done (18-06-04 03:04)
+
+ V2:
+ ☐ Criar importacao automatica das planilhas
