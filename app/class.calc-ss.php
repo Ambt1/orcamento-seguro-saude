@@ -871,7 +871,8 @@ class SeguroSaude {
     }
   }
 
-  public static function saveFormStyles(){
+  public static function saveFormStyles()
+  {
     $title = $_POST['style_title'];
     $formStyle = $_POST['formFieldsStyles'];
     $resultStyle = $_POST['formResultStyles'];
@@ -902,6 +903,63 @@ class SeguroSaude {
     wp_redirect( admin_url('admin.php?page=seguro-saude&action=config&step=3') );
   }
 
+  public static function exportData()
+  {
+    global $wpdb;
+
+    $tables = array(
+      $wpdb->prefix . 'calc_ss_planos',
+      $wpdb->prefix . 'calc_ss_modalidades',
+      $wpdb->prefix . 'calc_ss_categories',
+      $wpdb->prefix . 'calc_ss_status',
+      $wpdb->prefix . 'calc_ss_age_by_price',
+      $wpdb->prefix . 'calc_ss_modalidades_has_categories',
+      $wpdb->prefix . 'calc_ss_leads'
+    );
+
+    $content = '';
+
+    foreach ($tables as $table) {
+      if (self::formatSQLDB($table)) {
+        $content .= self::formatSQLDB($table);
+      }
+    }
+
+    header('Content-Type: application/octet-stream');   
+    header("Content-Transfer-Encoding: Binary"); 
+    header("Content-disposition: attachment; filename='backup-data.amb1'");  
+    echo $content;
+    exit();
+    wp_die();
+  }
+
+  public static function importData()
+  {
+    ini_set ('default_charset' , 'UTF-8' );
+    setlocale (LC_ALL, 'pt_BR.UTF-8'); # or what your favorit
+    global $wpdb;
+
+    if (!preg_match('/\.amb1/', $_FILES['import_data']['name'])) {
+      wp_redirect(admin_url("admin.php?page=seguro-saude&action=config&step=2&status=error"));
+      die();
+    }
+
+    if (!empty($_FILES['import_data']['tmp_name'])) {
+      self::truncateDB();
+
+      $raw_file = file_get_contents($_FILES['import_data']['tmp_name']);
+      $queries = explode(" -------- ", $raw_file);
+
+      foreach ($queries as $query) {
+        if (!empty($query)) {
+          $wpdb->query($query);
+        }
+      }
+    }
+    wp_redirect(admin_url("admin.php?page=seguro-saude&action=config&step=2&status=imported"));
+    die();
+  }
+
   /**********************************************
   *
   *
@@ -916,6 +974,30 @@ class SeguroSaude {
   *    Database Model a like Methods
   *
   **********************************************/
+
+  private static function truncateDB()
+  {
+    global $wpdb;
+
+    $planos = $wpdb->prefix . 'calc_ss_planos';
+    $modalidades = $wpdb->prefix . 'calc_ss_modalidades';
+    $categorias = $wpdb->prefix . 'calc_ss_categories';
+    $status = $wpdb->prefix . 'calc_ss_status';
+    $age_by_price = $wpdb->prefix . 'calc_ss_age_by_price';
+    $modalidades_has_categories = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
+    $leads = $wpdb->prefix . 'calc_ss_leads';
+    $forms = $wpdb->prefix . 'calc_ss_forms';
+
+    $wpdb->query("SET FOREIGN_KEY_CHECKS = 0");
+    $wpdb->query("TRUNCATE $age_by_price");
+    $wpdb->query("TRUNCATE $leads");
+    $wpdb->query("TRUNCATE $modalidades_has_categories");
+    $wpdb->query("TRUNCATE $categorias");
+    $wpdb->query("TRUNCATE $modalidades");
+    $wpdb->query("TRUNCATE $planos");
+    $wpdb->query("TRUNCATE $status");
+    $wpdb->query("SET FOREIGN_KEY_CHECKS = 1");
+  }
   
   private static function selectLeadsPlan($data)
   {
@@ -1225,10 +1307,6 @@ class SeguroSaude {
   private static function editPlan($data)
   {
     global $wpdb;
-    // echo '<pre>';
-    // var_dump($data);
-    // echo '</pre>';
-    // exit();
     /**********************************************
     *
     *    UPDATE PLAN
@@ -1473,6 +1551,8 @@ class SeguroSaude {
     add_action('admin_post_edit_leads', array('SeguroSaude', 'leadsEdit') );
     add_action('admin_post_select_plan', array('SeguroSaude', 'planSelect') );
     add_action('admin_post_save_form_styles', array('SeguroSaude', 'saveFormStyles') );
+    add_action('admin_post_export_data', array('SeguroSaude', 'exportData') );
+    add_action('admin_post_import_data', array('SeguroSaude', 'importData') );
     add_shortcode('seguro-saude', array('SeguroSaude', 'shortcodeForm'));
     add_shortcode('plano-valores', array('SeguroSaude', 'shortcodePriceTable'));
     /**********************************************
@@ -1776,4 +1856,76 @@ class SeguroSaude {
       return false;
   }
 
+  public static function formatSQLDB($table)
+  {
+    global $wpdb;
+    /**********************************************
+    *
+    *    Select All Results
+    *    And Check if there are items
+    *
+    **********************************************/
+    $tableResults = $wpdb->get_results("SELECT * FROM $table");
+    if (count($tableResults) > 0) {
+      // MASTER SQL TEXTS
+      $sqlCreateTable = '';
+      $sqlTableValues = '';
+      $sqlColumns = '';
+      /**********************************************
+      *
+      *    Get Column Names
+      *
+      **********************************************/
+      $columns = $wpdb->get_results("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='$wpdb->dbname' AND `TABLE_NAME`='$table';");
+      foreach ($columns as $column) {
+        $sqlColumns .= $column->COLUMN_NAME . ',';
+      }
+      $sqlColumns = substr_replace($sqlColumns, '', (strlen($sqlColumns) - 1));
+      /**********************************************
+      *
+      *    Creating Values Inserts
+      *
+      **********************************************/
+      $sqlTableValues .= "INSERT INTO $table($sqlColumns) VALUES ";
+      foreach ($tableResults as $result) {
+        $sqlTableValues .= "(";
+        foreach ($result as $field => $value) {
+          if (empty($value)) {
+            $sqlTableValues .= 'null,';
+          } else {
+            if ($field == "id" || $field == "modalidades") {
+              $sqlTableValues .= $value . ',';
+            } else {
+              $sqlTableValues .= "'".$value."'" . ',';
+            }
+          }
+        }
+        $sqlTableValues .= "),";
+      }
+      // cleaning last string
+      $sqlTableValues =  str_replace(",)", ")", substr_replace($sqlTableValues, ';', strlen($sqlTableValues) - 1)) . ' -------- ';
+      /**********************************************
+      *
+      *    Export Text Table
+      *
+      **********************************************/
+      $tableCreate = $wpdb->get_results("SHOW CREATE TABLE $table");
+      foreach ($tableCreate[0] as $key => $row) {
+        if ($key == "Create Table") {
+          $createTableSQL = $row . ';';
+        }
+      }
+      /**********************************************
+      *
+      *
+      *    PRINT IT
+      *
+      *
+      **********************************************/
+      $finalSQL = $sqlTableValues;
+      return $finalSQL;
+    }
+
+    return null;
+  }
 }

@@ -32,6 +32,12 @@ jQuery(document).ready(function($) {
     return false;
   });
 
+  $("#importbtn").on("click", function(){
+    if (!confirm("Ao fazer a importação, todos os dados atuais serão substituídos pelos dados do arquivo. Tem certeza que deseja continuar?")) {
+      return false;
+    }
+  });
+
   if (getParameterByName('slug')) {
     loadPreview();
   }

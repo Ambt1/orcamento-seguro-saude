@@ -54,7 +54,7 @@ if (isset($_GET['page'])) {
         if ($_GET['step'] == 2) {
           $tabactive_2 = 'nav-tab-active';
           require('config.php');
-          require('config-messages.php'); 
+          require('config-eximport.php'); 
         }
         if ($_GET['step'] == 3) {
           $tabactive_3 = 'nav-tab-active';
