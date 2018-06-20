@@ -917,8 +917,19 @@ class SeguroSaude {
       $wpdb->prefix . 'calc_ss_leads'
     );
 
-    $content = '';
+    if (!empty($_POST['tableOptions'])) {
+      if (in_array('leads', $_POST['tableOptions'])) {
+        $idTable = array_search($wpdb->prefix . 'calc_ss_leads', $tables);
+        unset($tables[$idTable]);
+      }
 
+      if (in_array('status', $_POST['tableOptions'])) {
+        $idTable = array_search($wpdb->prefix . 'calc_ss_status', $tables);
+        unset($tables[$idTable]);
+      }
+    }
+
+    $content = '';
     foreach ($tables as $table) {
       if (self::formatSQLDB($table)) {
         $content .= self::formatSQLDB($table);
