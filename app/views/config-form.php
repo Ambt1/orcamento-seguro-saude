@@ -21,7 +21,7 @@
       </thead>
 
       <tbody id="the-list" data-wp-lists="list:tag">
-        <?php if(isset($formStyles)): foreach ($formStyles as $style) : ?>
+        <?php if(!empty($formStyles)): foreach ($formStyles as $style) : ?>
           <tr id="tag-1">
             <td class="name column-name has-row-actions column-primary" data-colname="Nome">
               <strong>

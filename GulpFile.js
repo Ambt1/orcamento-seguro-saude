@@ -19,6 +19,6 @@ gulp.task('watch', function(){
 
 gulp.task('build', function(){
   gulp.src(sourceFiles)
-      .pipe(gulpZip(`saude-plugin-${new Date().getTime()}.zip`))
+      .pipe(gulpZip(`saude-plugin.zip`))
       .pipe(gulp.dest('dist'))
 });

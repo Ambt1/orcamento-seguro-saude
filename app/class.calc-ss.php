@@ -416,9 +416,9 @@ class SeguroSaude {
     /**********************************************
     *    HTML INPUTS
     **********************************************/
-    $htmlName = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Nome:</label><input type="text" value="" name="ss-amb1-name"></div>';
-    $htmlEmail = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Email:</label><input type="email" value="" name="ss-amb1-email"></div>';
-    $htmlPhone = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Telefone:</label><input type="text" value="" name="ss-amb1-phone"></div>';
+    $htmlName = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Nome:</label><input type="text" value="" name="ss-amb1-name" required></div>';
+    $htmlEmail = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Email:</label><input type="email" value="" name="ss-amb1-email" required></div>';
+    $htmlPhone = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Telefone:</label><input type="text" value="" name="ss-amb1-phone" required></div>';
     /**********************************************
     *    Select Adesão
     **********************************************/
@@ -426,7 +426,7 @@ class SeguroSaude {
     foreach ($categories['data'] as $category) {
       $htmlOption .= '<option value="'.$category->id.'">'.$category->name.'</option>';
     }
-    $htmlSelect = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Adesão:</label><select name="ss-amb1-modalidades-categoria" class="ss-amb1--select">'.$htmlOption.'</select></div>';
+    $htmlSelect = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Adesão:</label><select name="ss-amb1-modalidades-categoria" class="ss-amb1--select" required>'.$htmlOption.'</select></div>';
     /**********************************************
     *    Select Planos
     **********************************************/
@@ -434,7 +434,7 @@ class SeguroSaude {
     foreach ($plans['data'] as $plan) {
       $htmlPlans .= '<option value="'.$plan->id.'">'.$plan->name.'</option>';
     }
-    $htmlPlans = '<div class="ss-amb1-field__wrapper ss-amb1-field__wrapper--block"><label class="ss-amb1-field__label">Plano de Saúde:</label><select name="ss-amb1-modalidades-plano" class="ss-amb1--select"><option selected>Todos</option>'.$htmlPlans.'</select></div>';
+    $htmlPlans = '<div class="ss-amb1-field__wrapper ss-amb1-field__wrapper--block"><label class="ss-amb1-field__label">Plano de Saúde:</label><select required name="ss-amb1-modalidades-plano" class="ss-amb1--select"><option selected>Todos</option>'.$htmlPlans.'</select></div>';
     /**********************************************
     *    List of Ages
     **********************************************/
@@ -838,6 +838,7 @@ class SeguroSaude {
     header('Content-Length: '.filesize($file_name));  // provide file size
     header('Connection: close');
     readfile($file_name);   // push it out
+    exit();
     wp_die();
   }
 
@@ -957,16 +958,19 @@ class SeguroSaude {
 
     if (!empty($_FILES['import_data']['tmp_name'])) {
       self::truncateDB();
-
+      self::installTables();
       $raw_file = file_get_contents($_FILES['import_data']['tmp_name']);
       $queries = explode(" -------- ", $raw_file);
 
       foreach ($queries as $query) {
         if (!empty($query)) {
+          $splitQuery = explode("INSERT INTO ", $query);
+          $query = "INSERT INTO " . $wpdb->prefix . $splitQuery[1];
           $wpdb->query($query);
         }
       }
     }
+
     wp_redirect(admin_url("admin.php?page=seguro-saude&action=config&step=2&status=imported"));
     die();
   }
@@ -1183,7 +1187,8 @@ class SeguroSaude {
     $table = $wpdb->prefix . 'calc_ss_categories';
     $fields = array(
       'name' => $data['name'],
-      'slug' => $data['slug']
+      'slug' => $data['slug'],
+      'created_at' => current_time( 'mysql' )
     );
     $types = array('%s','%s');
     if ($wpdb->insert($table, $fields, $types)) {
@@ -1204,7 +1209,8 @@ class SeguroSaude {
       "telefone" => $data["phone"],
       "categorias_id" => $data["adesao"],
       "ages_selected" => serialize($data["ages"]),
-      "responsible" => $data["responsible"]
+      "responsible" => $data["responsible"],
+      'created_at' => current_time( 'mysql' )
     );
     $types = array('%s', '%s', '%s', '%d', '%s', '%d');
     if ($wpdb->insert($table, $fields, $types)) {
@@ -1229,6 +1235,7 @@ class SeguroSaude {
       'name' => $data['plan_title'],
       'slug' => sanitize_title($data['plan_title']),
       'modalidades' => $totalModalidades,  
+      'created_at' => current_time( 'mysql' )
     );
     $types = array('%s', '%s', '%d');
     $wpdb->insert($table, $fields, $types);
@@ -1305,7 +1312,8 @@ class SeguroSaude {
     $table = $wpdb->prefix . 'calc_ss_status';
     $fields = array(
       'name' => $data['name'],
-      'slug' => $data['slug']
+      'slug' => $data['slug'],
+      'created_at' => current_time( 'mysql' )
     );
     $types = array('%s','%s');
     if ($wpdb->insert($table, $fields, $types)) {
@@ -1596,121 +1604,139 @@ class SeguroSaude {
     $table_name_leads = $wpdb->prefix . 'calc_ss_leads';
     $table_name_forms = $wpdb->prefix . 'calc_ss_forms';
     $charset_collate = $wpdb->get_charset_collate();
+      
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
-    $planos = "CREATE TABLE $table_name_planos (
+    $planos = "CREATE TABLE IF NOT EXISTS $table_name_planos 
+    (
       id INT NOT NULL AUTO_INCREMENT,
       name VARCHAR(255) NULL,
       slug VARCHAR(255) NULL,
       modalidades INT NULL,
-      created_at DATETIME NOT NULL DEFAULT NOW(),
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+      updated_at DATETIME NULL,
+      PRIMARY KEY  (id)
+    ) $charset_collate;
+    ";
+
+    dbDelta($planos);
+
+    $modalidades = "CREATE TABLE IF NOT EXISTS $table_name_modalidades 
+    (
+      id INT NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NULL,
+      total_age INT NULL,
+      price_min DECIMAL(15,2) NULL,
+      price_max DECIMAL(15,2) NULL,
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+      categorias VARCHAR(255) NULL,
+      updated_at DATETIME NULL,
+      planos_id INT NOT NULL,
+      PRIMARY KEY (id),
+      INDEX fk_modalidades_planos1_idx (planos_id ASC),
+      CONSTRAINT fk_modalidades_planos1
+      FOREIGN KEY (planos_id)
+      REFERENCES $table_name_planos (id)
+      ON DELETE CASCADE
+      ON UPDATE NO ACTION
+    ) $charset_collate;";
+
+    dbDelta($modalidades);
+
+    $categorias = "CREATE TABLE IF NOT EXISTS $table_name_categorias 
+    (
+      id INT NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NULL,
+      slug VARCHAR(255) NULL,
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
       updated_at DATETIME NULL,
       PRIMARY KEY (id)
     ) $charset_collate;";
 
-    $modalidades = "CREATE TABLE $table_name_modalidades (
-      `id` INT NOT NULL AUTO_INCREMENT,
-      `name` VARCHAR(255) NULL,
-      `total_age` INT NULL,
-      `price_min` DECIMAL(15,2) NULL,
-      `price_max` DECIMAL(15,2) NULL,
-      `created_at` DATETIME NOT NULL DEFAULT NOW(),
-      `categorias` VARCHAR(255) NULL,
-      `updated_at` DATETIME NULL,
-      `planos_id` INT NOT NULL,
-      PRIMARY KEY (`id`),
-      INDEX `fk_modalidades_planos1_idx` (`planos_id` ASC),
-      CONSTRAINT `fk_modalidades_planos1`
-      FOREIGN KEY (`planos_id`)
-      REFERENCES `$table_name_planos` (`id`)
+    dbDelta($categorias);
+
+    $status = "CREATE TABLE IF NOT EXISTS $table_name_status 
+    (
+      id INT NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NULL,
+      slug VARCHAR(255) NULL,
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+      updated_at DATETIME NULL,
+      PRIMARY KEY (id)
+    ) $charset_collate;";
+
+    dbDelta($status);
+
+    $age_by_price = "CREATE TABLE IF NOT EXISTS $table_name_age_by_price 
+    (
+      id INT NOT NULL AUTO_INCREMENT,
+      age_min INT NULL,
+      age_max INT NULL,
+      price_cop DECIMAL(15,2) NULL,
+      price_nocop DECIMAL(15,2) NULL,
+      modalidades_id INT NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+      updated_at DATETIME NULL,
+      PRIMARY KEY (id),
+      INDEX fk_age_by_price_modalidades_idx (modalidades_id ASC),
+      CONSTRAINT fk_age_by_price_modalidades
+      FOREIGN KEY (modalidades_id)
+      REFERENCES $table_name_modalidades (id)
       ON DELETE CASCADE
       ON UPDATE NO ACTION
     ) $charset_collate;";
 
-    $categorias = "CREATE TABLE $table_name_categorias (
-      `id` INT NOT NULL AUTO_INCREMENT,
-      `name` VARCHAR(255) NULL,
-      `slug` VARCHAR(255) NULL,
-      `created_at` DATETIME NOT NULL DEFAULT NOW(),
-      `updated_at` DATETIME NULL,
-      PRIMARY KEY (`id`)
-    ) $charset_collate;";
+    dbDelta($age_by_price);
 
-    $status = "CREATE TABLE $table_name_status (
-      `id` INT NOT NULL AUTO_INCREMENT,
-      `name` VARCHAR(255) NULL,
-      `slug` VARCHAR(255) NULL,
-      `created_at` DATETIME NOT NULL DEFAULT NOW(),
-      `updated_at` DATETIME NULL,
-      PRIMARY KEY (`id`)
-    ) $charset_collate;";
-
-    $age_by_price = "CREATE TABLE $table_name_age_by_price (
-      `id` INT NOT NULL AUTO_INCREMENT,
-      `age_min` INT NULL,
-      `age_max` INT NULL,
-      `price_cop` DECIMAL(15,2) NULL,
-      `price_nocop` DECIMAL(15,2) NULL,
-      `modalidades_id` INT NOT NULL,
-      `created_at` DATETIME NOT NULL DEFAULT NOW(),
-      `updated_at` DATETIME NULL,
-      PRIMARY KEY (`id`),
-      INDEX `fk_age_by_price_modalidades_idx` (`modalidades_id` ASC),
-      CONSTRAINT `fk_age_by_price_modalidades`
-      FOREIGN KEY (`modalidades_id`)
-      REFERENCES `$table_name_modalidades` (`id`)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
-    ) $charset_collate;";
-
-    $modalidades_has_categories = "CREATE TABLE $table_name_modalidades_has_categories (
-      `modalidades_id` INT NOT NULL,
-      `categorias_id` INT NOT NULL,
-      PRIMARY KEY (`modalidades_id`, `categorias_id`),
-      INDEX `fk_modalidades_has_categorias_categorias1_idx` (`categorias_id` ASC),
-      INDEX `fk_modalidades_has_categorias_modalidades1_idx` (`modalidades_id` ASC),
-      CONSTRAINT `fk_modalidades_has_categorias_modalidades1`
-      FOREIGN KEY (`modalidades_id`)
-      REFERENCES `$table_name_modalidades` (`id`)
+    $modalidades_has_categories = "CREATE TABLE IF NOT EXISTS $table_name_modalidades_has_categories 
+    (
+      modalidades_id INT NOT NULL,
+      categorias_id INT NOT NULL,
+      PRIMARY KEY (modalidades_id, categorias_id),
+      INDEX fk_modalidades_has_categorias_categorias1_idx (categorias_id ASC),
+      INDEX fk_modalidades_has_categorias_modalidades1_idx (modalidades_id ASC),
+      CONSTRAINT fk_modalidades_has_categorias_modalidades1
+      FOREIGN KEY (modalidades_id)
+      REFERENCES $table_name_modalidades (id)
       ON DELETE CASCADE
       ON UPDATE NO ACTION,
-      CONSTRAINT `fk_modalidades_has_categorias_categorias1`
-      FOREIGN KEY (`categorias_id`)
-      REFERENCES `$table_name_categorias` (`id`)
+      CONSTRAINT fk_modalidades_has_categorias_categorias1
+      FOREIGN KEY (categorias_id)
+      REFERENCES $table_name_categorias (id)
       ON DELETE CASCADE
       ON UPDATE NO ACTION
     ) $charset_collate;";
 
-    $leads = "CREATE TABLE $table_name_leads (
-      `id` INT NOT NULL AUTO_INCREMENT,
-      `name` VARCHAR(255) NOT NULL,
-      `email` VARCHAR(255) NOT NULL,
-      `telefone` VARCHAR(255) NOT NULL,
-      `created_at` DATETIME NOT NULL DEFAULT NOW(),
-      `categorias_id` INT NOT NULL,
-      `ages_selected` TEXT NULL,
-      `status_id` INT DEFAULT NULL,
-      `obs` TEXT NULL,
-      `responsible` INT NULL,
-      PRIMARY KEY (`id`),
-      INDEX `fk_leads_categorias1_idx` (`categorias_id` ASC),
-      INDEX `fk_leads_status1_idx` (`status_id` ASC),
-      CONSTRAINT `fk_leads_categorias1`
-      FOREIGN KEY (`categorias_id`)
-      REFERENCES `$table_name_categorias` (`id`)
+    dbDelta($modalidades_has_categories);
+
+    $leads = "CREATE TABLE IF NOT EXISTS $table_name_leads 
+    (
+      id INT NOT NULL AUTO_INCREMENT,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      telefone VARCHAR(255) NOT NULL,
+      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+      categorias_id INT NOT NULL,
+      ages_selected TEXT NULL,
+      status_id INT DEFAULT NULL,
+      obs TEXT NULL,
+      responsible INT NULL,
+      PRIMARY KEY (id),
+      INDEX fk_leads_categorias1_idx (categorias_id ASC),
+      INDEX fk_leads_status1_idx (status_id ASC),
+      CONSTRAINT fk_leads_categorias1
+      FOREIGN KEY (categorias_id)
+      REFERENCES $table_name_categorias (id)
       ON DELETE CASCADE
       ON UPDATE NO ACTION,
-      CONSTRAINT `fk_leads_status1`
-      FOREIGN KEY (`status_id`)
-      REFERENCES `$table_name_status` (`id`)
+      CONSTRAINT fk_leads_status1
+      FOREIGN KEY (status_id)
+      REFERENCES $table_name_status (id)
       ON DELETE NO ACTION
       ON UPDATE NO ACTION
     ) $charset_collate;";
 
-    $sql = [$planos, $modalidades, $categorias, $age_by_price, $modalidades_has_categories, $status, $leads];
-
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-
-    dbDelta($sql);
+    dbDelta($leads);
   }
 
   private static function randomUser()
@@ -1891,24 +1917,29 @@ class SeguroSaude {
       foreach ($columns as $column) {
         $sqlColumns .= $column->COLUMN_NAME . ',';
       }
-      $sqlColumns = substr_replace($sqlColumns, '', (strlen($sqlColumns) - 1));
       /**********************************************
       *
       *    Creating Values Inserts
       *
       **********************************************/
+      $table = str_replace($wpdb->prefix, "", $table);
       $sqlTableValues .= "INSERT INTO $table($sqlColumns) VALUES ";
-      foreach ($tableResults as $result) {
+      foreach ($tableResults as $key => $result) {
         $sqlTableValues .= "(";
         foreach ($result as $field => $value) {
-          if (empty($value)) {
-            $sqlTableValues .= 'null,';
+          // if (empty($value)) {
+          //   $sqlTableValues .= 'null,';
+          // } else {
+          //   if ($field == "id" || $field == "modalidades") {
+          //     $sqlTableValues .= $value . ',';
+          //   } else {
+          //     $sqlTableValues .= "'".$value."'" . ',';
+          //   }
+          // }
+          if ($field == "id" || $field == "modalidades") {
+            $sqlTableValues .= $value . ',';
           } else {
-            if ($field == "id" || $field == "modalidades") {
-              $sqlTableValues .= $value . ',';
-            } else {
-              $sqlTableValues .= "'".$value."'" . ',';
-            }
+            $sqlTableValues .= "'".$value."'" . ',';
           }
         }
         $sqlTableValues .= "),";
@@ -1920,7 +1951,7 @@ class SeguroSaude {
       *    Export Text Table
       *
       **********************************************/
-      $tableCreate = $wpdb->get_results("SHOW CREATE TABLE $table");
+      $tableCreate = $wpdb->get_results("SHOW CREATE TABLE IF NOT EXISTS $table");
       foreach ($tableCreate[0] as $key => $row) {
         if ($key == "Create Table") {
           $createTableSQL = $row . ';';
@@ -1940,3 +1971,4 @@ class SeguroSaude {
     return null;
   }
 }
+

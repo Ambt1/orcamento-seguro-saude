@@ -9,7 +9,7 @@
     <a target="_blank" href="<?php echo admin_url('admin-post.php?action=export_leads'); ?>" class="page-title-action export-button">Exportar lista</a>  
   <?php endif ?>
   <p>Abaixo está listado todos os interessados cadastrados. Para visualizar as informações basta clicar no nome de cada um deles. </p>
-  <table class="wp-list-table widefat fixed striped posts">
+  <table class="wp-list-table widefat fixed striped posts fix-responsive">
     <thead>
       <tr>
         <td id="cb" class="manage-column column-cb check-column">
@@ -30,9 +30,8 @@
    </thead>
    <tbody id="the-list">
     <?php foreach ($row as $item) : ?>
-      <tr id="post-1" class="iedit author-self level-0 post-1 type-post status-publish format-standard hentry category-sem-categoria">
+      <tr id="post-1" class="">
         <th scope="row" class="check-column">     
-          <label class="screen-reader-text" for="cb-select-1">Selecionar Olá, mundo!</label>
           <input id="cb-select-1" type="checkbox" name="post[]" value="1">
         </th>
         <td class="" data-colname="Título">

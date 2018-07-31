@@ -15,9 +15,12 @@
   background-color: #686868;
   color: #fff;
   text-align: center;
+  white-space: normal;
 }
 
 .ss-amb1--form__wrapper .button-primary {
+  padding: 1em 2em;
+
   background-color: #686868;
   border:  none;
   color: #fff;
@@ -57,6 +60,8 @@
 .ss-amb1--form__wrapper,
 .ss-amb1--form-results__wrapper {
   padding: 1em;
+
+  font-family: sans-serif;
 }
 
 .ss-amb1-legend,
@@ -65,10 +70,19 @@
   padding: .5em;
 }
 
-.ss-amb1--form__wrapper .button-primary {
-  margin-left: 1em;
-  margin-top: 1.5em;
-  padding: 1em;
+@media screen and (min-width: 0) {
+  .ss-amb1--form__wrapper .button-primary {
+    width: 100%;
+  }
+}
+
+@media screen and (min-width: 700px) {
+  .ss-amb1--form__wrapper .button-primary {
+    margin-left: 20px;
+    margin-top: 29px;
+    padding: 1em;
+    width:  auto;
+  }
 }
 
 /**********************************************
@@ -97,27 +111,6 @@
 *
 **********************************************/
 
-.ss-amb1-field__wrapper {
-  display: block;
-  float: left;
-  margin-bottom: .5em;
-  margin-top: .5em;
-  width: 50%;
-}
-
-.ss-amb1-field__wrapper:nth-child(even) {
-  margin-right: 1em;
-  width: calc(50% - 1em);
-}
-
-.ss-amb1-field__wrapper:nth-child(4n+1) {
-  margin-left: 0;
-}
-
-.ss-amb1-field__wrapper--block {
-  width:  100% !important;
-}
-
 .ss-amb1-field__wrapper input[type="text"],
 .ss-amb1-field__wrapper input[type="email"],
 .ss-amb1-field__wrapper input[type="tel"],
@@ -128,4 +121,54 @@
   height: 2em;
   margin: 0;
   width:  100%;
+}
+
+.ss-amb1-field__wrapper input[type="text"],
+.ss-amb1-field__wrapper input[type="email"],
+.ss-amb1-field__wrapper input[type="tel"],
+.ss-amb1-field__wrapper input[type="number"],
+.ss-amb1-field__wrapper select {
+  border: solid 1px #ccc;
+  min-height: 26px;
+}
+
+@media screen and (min-width: 0) {
+  .ss-amb1-field__wrapper {
+    display: block;
+    float: left;
+    margin-bottom: .5em;
+    margin-top: .5em;
+    width: 100%;
+  }
+
+  .ss-amb1-field__wrapper:nth-child(even) {
+    margin-right: 1em;
+  }
+
+  .ss-amb1-field__wrapper select {
+    height: 40px;
+  }
+}
+
+@media screen and (min-width: 700px) {
+  .ss-amb1-field__wrapper {
+    width: 50%;
+  }
+
+  .ss-amb1-field__wrapper:nth-child(even) {
+    margin-right: 1em;
+    width: calc(50% - 1em);
+  }
+
+  .ss-amb1-field__wrapper select {
+    height: 30px;
+  }
+}
+
+.ss-amb1-field__wrapper:nth-child(4n+1) {
+  margin-left: 0;
+}
+
+.ss-amb1-field__wrapper--block {
+  width:  100% !important;
 }
