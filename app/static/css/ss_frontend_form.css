@@ -78,10 +78,10 @@
 
 @media screen and (min-width: 700px) {
   .ss-amb1--form__wrapper .button-primary {
-    margin-left: 20px;
-    margin-top: 29px;
+    margin-left: 0;
+    margin-top: 10px;
     padding: 1em;
-    width:  auto;
+    width:  100%;
   }
 }
 
@@ -96,7 +96,7 @@
 
 .ss-amb1--ages__wrapper .ss-amb1-field__wrapper {
   display: inline-block;
-  margin-left: 1em;
+  margin-left: .5em;
   margin-right: 0 !important;
   width: 22% !important;
 }
@@ -130,6 +130,43 @@
 .ss-amb1-field__wrapper select {
   border: solid 1px #ccc;
   min-height: 26px;
+
+  font-family: sans-serif;
+}
+
+.ss-amb1-field__wrapper select {
+  font-size: .9em;
+}
+
+.ss-amb1-field__wrapper input[type="text"],
+.ss-amb1-field__wrapper input[type="email"],
+.ss-amb1-field__wrapper input[type="tel"],
+.ss-amb1-field__wrapper input[type="number"] {
+  padding: 1em 0.7em 0.5em 0.7em;
+}
+
+.ss-amb1-field__label {
+  position: absolute;
+  margin: 5px 5px 5px 10px;
+  width: auto;
+
+  font-size: .8em;
+  -webkit-transition: all .25s linear;
+     -moz-transition: all .25s linear;
+      -ms-transition: all .25s linear;
+       -o-transition: all .25s linear;
+          transition: all .25s linear;
+}
+
+.ss-amb1-field__wrapper.is-active .ss-amb1-field__label {
+  font-size: 8px;
+  margin: 0 0 0 10px;
+}
+
+.title-nofloat {
+  position: static;
+  margin:  0 0 0 10px;
+  height: auto;
 }
 
 @media screen and (min-width: 0) {
@@ -138,6 +175,7 @@
     float: left;
     margin-bottom: .5em;
     margin-top: .5em;
+    position: relative;
     width: 100%;
   }
 

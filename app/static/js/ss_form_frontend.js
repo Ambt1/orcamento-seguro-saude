@@ -1,4 +1,23 @@
 jQuery(document).ready(function($) {
+  $('form[name="ss-amb1-form"] .ss-amb1-field__label').on('click', function(){
+    if (!$(this).parent('.ss-amb1-field__wrapper').hasClass('is-active')) {
+      $(this).parent('.ss-amb1-field__wrapper').addClass('is-active');
+      $(this).next().focus();
+    }
+  });
+
+  $('form[name="ss-amb1-form"] input')
+  .on("focus", function(){
+    if (!$(this).parent('.ss-amb1-field__wrapper').hasClass('is-active')) {
+      $(this).parent('.ss-amb1-field__wrapper').addClass('is-active');
+    }
+  })
+  .on("blur", function(){
+    if ($(this).val().length == 0) {
+      $(this).parent('.ss-amb1-field__wrapper').removeClass('is-active');
+    }
+  });
+
   $('form[name="ss-amb1-form"]').on("submit", function(e){
     e.preventDefault();
     const form = $(this);

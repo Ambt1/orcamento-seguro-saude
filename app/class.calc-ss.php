@@ -426,7 +426,7 @@ class SeguroSaude {
     foreach ($categories['data'] as $category) {
       $htmlOption .= '<option value="'.$category->id.'">'.$category->name.'</option>';
     }
-    $htmlSelect = '<div class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">Adesão:</label><select name="ss-amb1-modalidades-categoria" class="ss-amb1--select" required>'.$htmlOption.'</select></div>';
+    $htmlSelect = '<div class="ss-amb1-field__wrapper"><select name="ss-amb1-modalidades-categoria" class="ss-amb1--select" required><option value="" selected>Selecionar Adesão</option>'.$htmlOption.'</select></div>';
     /**********************************************
     *    Select Planos
     **********************************************/
@@ -434,19 +434,19 @@ class SeguroSaude {
     foreach ($plans['data'] as $plan) {
       $htmlPlans .= '<option value="'.$plan->id.'">'.$plan->name.'</option>';
     }
-    $htmlPlans = '<div class="ss-amb1-field__wrapper ss-amb1-field__wrapper--block"><label class="ss-amb1-field__label">Plano de Saúde:</label><select required name="ss-amb1-modalidades-plano" class="ss-amb1--select"><option selected>Todos</option>'.$htmlPlans.'</select></div>';
+    $htmlPlans = '<div class="ss-amb1-field__wrapper ss-amb1-field__wrapper--block"><select required name="ss-amb1-modalidades-plano" class="ss-amb1--select"><option selected value="">Plano de Saúde</option><option>Todos</option>'.$htmlPlans.'</select></div>';
     /**********************************************
     *    List of Ages
     **********************************************/
     if ($ages['data']) {
-      $htmlAges = '<div class="ss-amb1--ages__wrapper">';  
+      $htmlAges = '<div class="ss-amb1--ages__wrapper"><label class="ss-amb1-field__label title-nofloat">Insira o número de dependentes por faixa etária</label>';  
       foreach ($ages['data'] as $age) {
         $htmlAges .= '<label class="ss-amb1-field__wrapper"><label class="ss-amb1-field__label">'.$age->age_min.' a '.$age->age_max.'</label><input type="number" value="" class="ss-amb1--field__input" name="ss-amb1-age['.$age->age_min.'__'.$age->age_max.']"> </label>';
       }
       $htmlAges .= '</div>';
     }
 
-    $submit = '<div class="ss-amb1-field__wrapper"><input class="button-primary" type="submit" name="Example" value="'.$buttonText.'" /></div>';
+    $submit = '<input class="button-primary" type="submit" name="Example" value="'.$buttonText.'" />';
 
     $html = '<div class="ss-amb1--wrapper"><form name="ss-amb1-form" action="POST" class="ss-amb1--form__wrapper"><legend class="ss-amb1-legend">'.$formTitle.'</legend>'.$htmlName.$htmlEmail.$htmlPhone.$htmlSelect.$htmlPlans.$htmlAges.$submit.'</form></div>';
 
