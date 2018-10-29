@@ -23,20 +23,6 @@ class SeguroSaude {
     global $wpdb;
 
     delete_option('calc_ss_version');
-
-    // $planos = $wpdb->prefix . 'calc_ss_planos';
-    // $modalidades = $wpdb->prefix . 'calc_ss_modalidades';
-    // $categorias = $wpdb->prefix . 'calc_ss_categories';
-    // $age_by_price = $wpdb->prefix . 'calc_ss_age_by_price';
-    // $modalidades_has_categories = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
-    // $leads = $wpdb->prefix . 'calc_ss_leads';
-
-    // $wpdb->query("DROP TABLE $planos");
-    // $wpdb->query("DROP TABLE $modalidades");
-    // $wpdb->query("DROP TABLE $categorias");
-    // $wpdb->query("DROP TABLE $age_by_price");
-    // $wpdb->query("DROP TABLE $modalidades_has_categories");
-    // $wpdb->query("DROP TABLE $leads");
   }
 
   public static function adminPages()
@@ -241,23 +227,23 @@ class SeguroSaude {
                 foreach ($plansDB[$slug]['modalidade']['true_age'] as $trueAge) {
                   if ($trueAge['min'] != $agePrices['min'] && $trueAge['max'] != $agePrices['max'] && $trueAge['price_cop'] != $agePrices['price_cop'] && $trueAge['price_nocop'] != $agePrices['price_nocop']) {
                    if (!in_array($agePrices, $plansDB[$slug]['modalidade']['true_age'])) {
-                      $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;      
-                    }
+                    $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;      
                   }
                 }
-              } else {
-                $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;
               }
             } else {
-              $plansDB[$slug]['modalidade']['age_price'][] = $localPrices;
+              $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;
             }
+          } else {
+            $plansDB[$slug]['modalidade']['age_price'][] = $localPrices;
           }
         }
-        else {
-          $plansDB[$slug] = $plan;  
-        }
+      }
+      else {
+        $plansDB[$slug] = $plan;  
       }
     }
+  }
 
     /**********************************************
     *
@@ -382,12 +368,28 @@ class SeguroSaude {
   {
     global $wpdb;
 
+    /**********************************************
+    *
+    *    Parse Form Styles
+    *
+    **********************************************/
+
+    $rootID = ".ss-amb1--form__wrapper ";
+
     if (array_key_exists('title', $atts)) {
       $formTitle = $atts['title'];
     }
 
     if (array_key_exists('button', $atts)) {
       $buttonText = $atts['button'];
+    }
+
+    if (array_key_exists('width', $atts)) {
+      $css .= $rootID.'{width: '.$atts['width'].';}';
+    }
+
+    if (array_key_exists('fontsize', $atts)) {
+      $css .= $rootID.'{font-size: '.$atts['fontsize'].';}';
     }
 
     if (array_key_exists('template', $atts)) {
@@ -402,12 +404,12 @@ class SeguroSaude {
         }
       }
 
-      $css = $style['formStyle'] . $style['resultStyle'];
-
-      wp_register_style( 'custom-form-styles', false );
-      wp_enqueue_style( 'custom-form-styles' );
-      wp_add_inline_style( 'custom-form-styles', $css );
+      $css .= $style['formStyle'];
     }
+
+    wp_register_style( 'custom-form-styles', false );
+    wp_enqueue_style( 'custom-form-styles' );
+    wp_add_inline_style( 'custom-form-styles', $css );
 
     $categories = self::getCategory();
     $ages = self::getAges();
@@ -459,32 +461,56 @@ class SeguroSaude {
       echo '<div style="clear:both; display:block;" class="class="ss-results--plan">Não foi possível carregar esta tabela de preço</div>';
     } else {
 
+      /**********************************************
+      *
+      *    Parse Form Styles
+      *
+      **********************************************/
+
       $htmlID = 'pricetable-'.substr(explode('.',microtime())[1], 0, 4);
+      $rootID = '#'.$htmlID;
+      $css = '';
 
-      if (array_key_exists('color', $atts) || array_key_exists('width', $atts) || array_key_exists('fontsize', $atts)) {
-        $rootID = '#'.$htmlID;
-        $css = '';
-
-        if (array_key_exists('color', $atts)) {
-          $rootColor = $atts['color'];
-          $titleColor = '#'.dechex(hexdec(str_replace("#", "", $rootColor)) + 658187);
-          $css .= $rootID .' .title{background-color: '.$titleColor.';}'
-          .$rootID .' .content,'
-          .$rootID .' .pt-footer { background: '.$rootColor.';}';
-        }
-
-        if (array_key_exists('width', $atts)) {
-          $css .= $rootID.'{width: '.$atts['width'].';}';
-        }
-
-        if (array_key_exists('fontsize', $atts)) {
-          $css .= $rootID.'{font-size: '.$atts['fontsize'].';}';
-        }
-
-        wp_register_style( 'shortcode-styles', false );
-        wp_enqueue_style( 'shortcode-styles' );
-        wp_add_inline_style( 'shortcode-styles', $css );
+      if (array_key_exists('color', $atts)) {
+        $rootColor = $atts['color'];
+        $titleColor = '#'.dechex(hexdec(str_replace("#", "", $rootColor)) + 658187);
+        $css .= $rootID .' .title{background-color: '.$titleColor.';}'
+        .$rootID .' .content,'
+        .$rootID .' .pt-footer { background: '.$rootColor.';}';
       }
+
+      if (array_key_exists('width', $atts)) {
+        $css .= $rootID.'{width: '.$atts['width'].';}';
+      }
+
+      if (array_key_exists('fontsize', $atts)) {
+        $css .= $rootID.'{font-size: '.$atts['fontsize'].';}';
+      }
+
+      if (array_key_exists('template', $atts)) {
+        $slug = $atts['template'];
+        $style = '';
+
+        if ($styles = unserialize(get_option('ss-amb1-form-styles'))) {
+          foreach ($styles as $key => $item) {
+            if ($item['slug'] == $slug) {
+              $style = $item;
+            } 
+          }
+        }
+
+        $css .= preg_replace('/^(\.)/m', $rootID . '.', $style['resultStyle']);
+      }
+
+      wp_register_style( 'pricetable-styles', false );
+      wp_enqueue_style( 'pricetable-styles' );
+      wp_add_inline_style( 'pricetable-styles', $css );
+
+      /**********************************************
+      *
+      *    Parse Form Code
+      *
+      **********************************************/
 
       $plan = self::filterPlan(self::selectPlan($atts['plano']));  
       $titulo = '<h2 class="title">'.$plan['name'].'</h2>';
@@ -511,7 +537,7 @@ class SeguroSaude {
         $modalidades .= $tbody . $agePrices . '</tbody></table></div>';
       }
 
-      $sh = '<div id="'.$htmlID.'" class="ss-results--plan">'.$titulo.$modalidades.'</div><div class="pt-footer">&nbsp;</div></div>';
+      $sh = '<div id="'.$htmlID.'" class="ss-results--plan form__response">'.$titulo.$modalidades.'</div><div class="pt-footer">&nbsp;</div></div>';
       
       return $sh;
     }
@@ -1388,6 +1414,12 @@ class SeguroSaude {
             }
             /**********************************************
             *
+            *    DELETE AGE PRICE MODALIDADES
+            *
+            **********************************************/
+            self::deleteAgePrice($modalidadeID);
+            /**********************************************
+            *
             *    UPDATE PRICE AND AGES
             *
             **********************************************/
@@ -1404,12 +1436,7 @@ class SeguroSaude {
                   );
                   $types = array('%d','%d','%d','%d');
                   // Check if row exists
-                  if (!empty($priceAge['id'])) {
-                    $fields['updated_at'] = current_time( 'mysql' );
-                    $wpdb->update($table, $fields, array('ID' => $priceAge['id']), $types, array('%d'));  
-                  } else {
-                    $wpdb->insert($table, $fields, $types);  
-                  }
+                  $wpdb->insert($table, $fields, $types);
                 }
               }
             }
@@ -1507,20 +1534,18 @@ class SeguroSaude {
     }
   }
 
-  private static function deletePlan($action, $data, $section)
+  private static function deleteAgePrice($id)
   {
     global $wpdb;
+
     $result = array();
-    $table = $wpdb->prefix . 'calc_ss_planos';
+    $table = $wpdb->prefix . 'calc_ss_age_by_price';
     $fields = array(
-      'id' => $data
+      'modalidades_id' => $id
     );
     $types = array('%d');
-    if ($wpdb->delete($table, $fields, $types)) {
-      return $result = array("status" => true, "msg" => "Item deletado com sucesso");
-    } else {
-      return $result = array("status" => false, "msg" => "Houve um erro ao deletar os dados");
-    }
+    
+    return $wpdb->delete($table, $fields, $types);
   }
 
   private static function exportLeads()
@@ -1604,18 +1629,18 @@ class SeguroSaude {
     $table_name_leads = $wpdb->prefix . 'calc_ss_leads';
     $table_name_forms = $wpdb->prefix . 'calc_ss_forms';
     $charset_collate = $wpdb->get_charset_collate();
-      
+
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
     $planos = "CREATE TABLE IF NOT EXISTS $table_name_planos 
     (
-      id INT NOT NULL AUTO_INCREMENT,
-      name VARCHAR(255) NULL,
-      slug VARCHAR(255) NULL,
-      modalidades INT NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      updated_at DATETIME NULL,
-      PRIMARY KEY  (id)
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NULL,
+    slug VARCHAR(255) NULL,
+    modalidades INT NULL,
+    created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+    updated_at DATETIME NULL,
+    PRIMARY KEY  (id)
     ) $charset_collate;
     ";
 
@@ -1623,183 +1648,183 @@ class SeguroSaude {
 
     $modalidades = "CREATE TABLE IF NOT EXISTS $table_name_modalidades 
     (
-      id INT NOT NULL AUTO_INCREMENT,
-      name VARCHAR(255) NULL,
-      total_age INT NULL,
-      price_min DECIMAL(15,2) NULL,
-      price_max DECIMAL(15,2) NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      categorias VARCHAR(255) NULL,
-      updated_at DATETIME NULL,
-      planos_id INT NOT NULL,
-      PRIMARY KEY (id),
-      INDEX fk_modalidades_planos1_idx (planos_id ASC),
-      CONSTRAINT fk_modalidades_planos1
-      FOREIGN KEY (planos_id)
-      REFERENCES $table_name_planos (id)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
-    ) $charset_collate;";
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NULL,
+    total_age INT NULL,
+    price_min DECIMAL(15,2) NULL,
+    price_max DECIMAL(15,2) NULL,
+    created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+    categorias VARCHAR(255) NULL,
+    updated_at DATETIME NULL,
+    planos_id INT NOT NULL,
+    PRIMARY KEY (id),
+    INDEX fk_modalidades_planos1_idx (planos_id ASC),
+    CONSTRAINT fk_modalidades_planos1
+    FOREIGN KEY (planos_id)
+    REFERENCES $table_name_planos (id)
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION
+  ) $charset_collate;";
 
-    dbDelta($modalidades);
+  dbDelta($modalidades);
 
-    $categorias = "CREATE TABLE IF NOT EXISTS $table_name_categorias 
-    (
-      id INT NOT NULL AUTO_INCREMENT,
-      name VARCHAR(255) NULL,
-      slug VARCHAR(255) NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      updated_at DATETIME NULL,
-      PRIMARY KEY (id)
-    ) $charset_collate;";
+  $categorias = "CREATE TABLE IF NOT EXISTS $table_name_categorias 
+  (
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NULL,
+  slug VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  updated_at DATETIME NULL,
+  PRIMARY KEY (id)
+) $charset_collate;";
 
-    dbDelta($categorias);
+dbDelta($categorias);
 
-    $status = "CREATE TABLE IF NOT EXISTS $table_name_status 
-    (
-      id INT NOT NULL AUTO_INCREMENT,
-      name VARCHAR(255) NULL,
-      slug VARCHAR(255) NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      updated_at DATETIME NULL,
-      PRIMARY KEY (id)
-    ) $charset_collate;";
+$status = "CREATE TABLE IF NOT EXISTS $table_name_status 
+(
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NULL,
+  slug VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  updated_at DATETIME NULL,
+  PRIMARY KEY (id)
+) $charset_collate;";
 
-    dbDelta($status);
+dbDelta($status);
 
-    $age_by_price = "CREATE TABLE IF NOT EXISTS $table_name_age_by_price 
-    (
-      id INT NOT NULL AUTO_INCREMENT,
-      age_min INT NULL,
-      age_max INT NULL,
-      price_cop DECIMAL(15,2) NULL,
-      price_nocop DECIMAL(15,2) NULL,
-      modalidades_id INT NOT NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      updated_at DATETIME NULL,
-      PRIMARY KEY (id),
-      INDEX fk_age_by_price_modalidades_idx (modalidades_id ASC),
-      CONSTRAINT fk_age_by_price_modalidades
-      FOREIGN KEY (modalidades_id)
-      REFERENCES $table_name_modalidades (id)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
-    ) $charset_collate;";
+$age_by_price = "CREATE TABLE IF NOT EXISTS $table_name_age_by_price 
+(
+  id INT NOT NULL AUTO_INCREMENT,
+  age_min INT NULL,
+  age_max INT NULL,
+  price_cop DECIMAL(15,2) NULL,
+  price_nocop DECIMAL(15,2) NULL,
+  modalidades_id INT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  updated_at DATETIME NULL,
+  PRIMARY KEY (id),
+  INDEX fk_age_by_price_modalidades_idx (modalidades_id ASC),
+  CONSTRAINT fk_age_by_price_modalidades
+  FOREIGN KEY (modalidades_id)
+  REFERENCES $table_name_modalidades (id)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION
+) $charset_collate;";
 
-    dbDelta($age_by_price);
+dbDelta($age_by_price);
 
-    $modalidades_has_categories = "CREATE TABLE IF NOT EXISTS $table_name_modalidades_has_categories 
-    (
-      modalidades_id INT NOT NULL,
-      categorias_id INT NOT NULL,
-      PRIMARY KEY (modalidades_id, categorias_id),
-      INDEX fk_modalidades_has_categorias_categorias1_idx (categorias_id ASC),
-      INDEX fk_modalidades_has_categorias_modalidades1_idx (modalidades_id ASC),
-      CONSTRAINT fk_modalidades_has_categorias_modalidades1
-      FOREIGN KEY (modalidades_id)
-      REFERENCES $table_name_modalidades (id)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION,
-      CONSTRAINT fk_modalidades_has_categorias_categorias1
-      FOREIGN KEY (categorias_id)
-      REFERENCES $table_name_categorias (id)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION
-    ) $charset_collate;";
+$modalidades_has_categories = "CREATE TABLE IF NOT EXISTS $table_name_modalidades_has_categories 
+(
+  modalidades_id INT NOT NULL,
+  categorias_id INT NOT NULL,
+  PRIMARY KEY (modalidades_id, categorias_id),
+  INDEX fk_modalidades_has_categorias_categorias1_idx (categorias_id ASC),
+  INDEX fk_modalidades_has_categorias_modalidades1_idx (modalidades_id ASC),
+  CONSTRAINT fk_modalidades_has_categorias_modalidades1
+  FOREIGN KEY (modalidades_id)
+  REFERENCES $table_name_modalidades (id)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION,
+  CONSTRAINT fk_modalidades_has_categorias_categorias1
+  FOREIGN KEY (categorias_id)
+  REFERENCES $table_name_categorias (id)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION
+) $charset_collate;";
 
-    dbDelta($modalidades_has_categories);
+dbDelta($modalidades_has_categories);
 
-    $leads = "CREATE TABLE IF NOT EXISTS $table_name_leads 
-    (
-      id INT NOT NULL AUTO_INCREMENT,
-      name VARCHAR(255) NOT NULL,
-      email VARCHAR(255) NOT NULL,
-      telefone VARCHAR(255) NOT NULL,
-      created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
-      categorias_id INT NOT NULL,
-      ages_selected TEXT NULL,
-      status_id INT DEFAULT NULL,
-      obs TEXT NULL,
-      responsible INT NULL,
-      PRIMARY KEY (id),
-      INDEX fk_leads_categorias1_idx (categorias_id ASC),
-      INDEX fk_leads_status1_idx (status_id ASC),
-      CONSTRAINT fk_leads_categorias1
-      FOREIGN KEY (categorias_id)
-      REFERENCES $table_name_categorias (id)
-      ON DELETE CASCADE
-      ON UPDATE NO ACTION,
-      CONSTRAINT fk_leads_status1
-      FOREIGN KEY (status_id)
-      REFERENCES $table_name_status (id)
-      ON DELETE NO ACTION
-      ON UPDATE NO ACTION
-    ) $charset_collate;";
+$leads = "CREATE TABLE IF NOT EXISTS $table_name_leads 
+(
+  id INT NOT NULL AUTO_INCREMENT,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  telefone VARCHAR(255) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  categorias_id INT NOT NULL,
+  ages_selected TEXT NULL,
+  status_id INT DEFAULT NULL,
+  obs TEXT NULL,
+  responsible INT NULL,
+  PRIMARY KEY (id),
+  INDEX fk_leads_categorias1_idx (categorias_id ASC),
+  INDEX fk_leads_status1_idx (status_id ASC),
+  CONSTRAINT fk_leads_categorias1
+  FOREIGN KEY (categorias_id)
+  REFERENCES $table_name_categorias (id)
+  ON DELETE CASCADE
+  ON UPDATE NO ACTION,
+  CONSTRAINT fk_leads_status1
+  FOREIGN KEY (status_id)
+  REFERENCES $table_name_status (id)
+  ON DELETE NO ACTION
+  ON UPDATE NO ACTION
+) $charset_collate;";
 
-    dbDelta($leads);
+dbDelta($leads);
+}
+
+private static function randomUser()
+{
+  $users = get_users(array(
+    "fields" => array('id'),
+    "role__in" => ['author', 'contributor', 'editor']
+  ));
+  $ids = array();
+  foreach ($users as $user) {
+    array_push($ids, $user->id);
   }
+  $randKey = array_rand($ids, 1);
+  return intval($ids[$randKey]);
+}
 
-  private static function randomUser()
-  {
-    $users = get_users(array(
-      "fields" => array('id'),
-      "role__in" => ['author', 'contributor', 'editor']
-    ));
-    $ids = array();
-    foreach ($users as $user) {
-      array_push($ids, $user->id);
-    }
-    $randKey = array_rand($ids, 1);
-    return intval($ids[$randKey]);
-  }
+private static function filterPlan($plan)
+{
+  $prepared = array(
+    "id" => $plan[0]->id,
+    "name" => $plan[0]->name,
+    "slug" => $plan[0]->slug,
+    "modalidade" => array(),
+    "ages" => array(),
+    "prices" => array(),
+    "categories" => array()
+  );
 
-  private static function filterPlan($plan)
-  {
-    $prepared = array(
-      "id" => $plan[0]->id,
-      "name" => $plan[0]->name,
-      "slug" => $plan[0]->slug,
-      "modalidade" => array(),
-      "ages" => array(),
-      "prices" => array(),
-      "categories" => array()
+  foreach ($plan as $key => $value) {
+    $modalidade = array(
+      "id" => $value->modalidade_id,
+      "value" => $value->modalidade
     );
 
-    foreach ($plan as $key => $value) {
-      $modalidade = array(
-        "id" => $value->modalidade_id,
-        "value" => $value->modalidade
-      );
+    $ages = array(
+      "min" => $plan[$key]->age_min,
+      "max" => $plan[$key]->age_max
+    );
 
-      $ages = array(
-        "min" => $plan[$key]->age_min,
-        "max" => $plan[$key]->age_max
-      );
+    $prices = array(
+      "price_cop" => $plan[$key]->price_cop,
+      "price_nocop" => $plan[$key]->price_nocop
+    );
 
-      $prices = array(
-        "price_cop" => $plan[$key]->price_cop,
-        "price_nocop" => $plan[$key]->price_nocop
-      );
-
-      if (!in_array($modalidade, $prepared['modalidade'])) {
-        array_push($prepared['modalidade'], $modalidade);  
-      }
-
-      if (!in_array($ages, $prepared['ages'])) {
-        array_push($prepared['ages'], $ages);  
-      }
-
-      if (!in_array($prices, $prepared['prices'])) {
-        array_push($prepared['prices'], $prices);  
-      }
-
-      if (!in_array($value->categoria_id, $prepared['categories'])) {
-        array_push($prepared['categories'], $value->categoria_id);  
-      }
+    if (!in_array($modalidade, $prepared['modalidade'])) {
+      array_push($prepared['modalidade'], $modalidade);  
     }
 
-    foreach ($prepared['modalidade'] as $key => $modalidade) {
-      $categorias = array();
+    if (!in_array($ages, $prepared['ages'])) {
+      array_push($prepared['ages'], $ages);  
+    }
+
+    if (!in_array($prices, $prepared['prices'])) {
+      array_push($prepared['prices'], $prices);  
+    }
+
+    if (!in_array($value->categoria_id, $prepared['categories'])) {
+      array_push($prepared['categories'], $value->categoria_id);  
+    }
+  }
+
+  foreach ($prepared['modalidade'] as $key => $modalidade) {
+    $categorias = array();
         // foreach ($item as $value) {
         //   if ($modalidade['value'] == $value->modalidade) {
         //     if (!in_array($value->categoria_id, $categorias)) {
@@ -1807,95 +1832,95 @@ class SeguroSaude {
         //     }
         //   }
         // };
-      $prepared['modalidade'][$key]['categorias'] = join($categorias,',');
-    }
-
-    return $prepared;
+    $prepared['modalidade'][$key]['categorias'] = join($categorias,',');
   }
 
-  private static function filterPlan2($plan, $parsed)
-  {
-    $prepared = array(
-      "id" => $plan[0]->id,
-      "name" => $plan[0]->name,
-      "slug" => $plan[0]->slug,
-      "modalidade" => array()
+  return $prepared;
+}
+
+private static function filterPlan2($plan, $parsed)
+{
+  $prepared = array(
+    "id" => $plan[0]->id,
+    "name" => $plan[0]->name,
+    "slug" => $plan[0]->slug,
+    "modalidade" => array()
+  );
+
+  $agesArr = array();
+  $pricesArr = array();
+  $catArr = array();
+
+  $countModalidade = 0;
+
+  foreach ($plan as $key => $value) {
+    $modalidade = array(
+      "id" => $value->modalidade_id,
+      "value" => $value->modalidade
     );
 
-    $agesArr = array();
-    $pricesArr = array();
-    $catArr = array();
+    $ages = array(
+      "min" => $plan[$key]->age_min,
+      "max" => $plan[$key]->age_max
+    );
 
-    $countModalidade = 0;
+    $prices = array(
+      "price_cop" => $plan[$key]->price_cop,
+      "price_nocop" => $plan[$key]->price_nocop
+    );
 
-    foreach ($plan as $key => $value) {
-      $modalidade = array(
-        "id" => $value->modalidade_id,
-        "value" => $value->modalidade
-      );
-
-      $ages = array(
-        "min" => $plan[$key]->age_min,
-        "max" => $plan[$key]->age_max
-      );
-
-      $prices = array(
-        "price_cop" => $plan[$key]->price_cop,
-        "price_nocop" => $plan[$key]->price_nocop
-      );
-
-      if (!in_array($modalidade, $prepared['modalidade'])) {
-        array_push($prepared['modalidade'], $modalidade);  
-      }
-
-      if (!in_array($ages, $agesArr)) {
-        array_push($agesArr, $ages);  
-      }
-
-      if (!in_array($prices, $pricesArr)) {
-        array_push($pricesArr, $prices);  
-      }
-
-      if (isset($value->categoria_id)) {
-        if (!in_array($value->categoria_id, $catArr)) {
-          array_push($catArr, $value->categoria_id);  
-        }
-      }
+    if (!in_array($modalidade, $prepared['modalidade'])) {
+      array_push($prepared['modalidade'], $modalidade);  
     }
 
-    foreach ($prepared['modalidade'] as $key => $modalidade) {
-      $categorias = array();
-      foreach ($agesArr as $age) {
-        $prepared['modalidade'][$key]['ages'][] = $age;
-      }
-      foreach ($pricesArr as $price) {
-        $prepared['modalidade'][$key]['prices'][] = $price;
-      }
-
-      $prepared['modalidade'][$key]['categorias'] = join($catArr,',');
+    if (!in_array($ages, $agesArr)) {
+      array_push($agesArr, $ages);  
     }
 
-    $ageKey = $parsed['ss-amb1-age'][$prepared['modalidade'][0]['ages'][0]['min'].'__'.$prepared['modalidade'][0]['ages'][0]['max']];
-    $prepared['modalidade'][0]['prices'][0]['price_cop'] = floatval($prepared['modalidade'][0]['prices'][0]['price_cop'] * $ageKey);
-    $prepared['modalidade'][0]['prices'][0]['price_nocop'] = floatval($prepared['modalidade'][0]['prices'][0]['price_nocop'] * $ageKey);
+    if (!in_array($prices, $pricesArr)) {
+      array_push($pricesArr, $prices);  
+    }
 
-    return $prepared;
-  }
-
-  public static function in_array_r($needle, $haystack, $strict = false) 
-  {
-      foreach ($haystack as $item) {
-          if (($strict ? $item === $needle : $item == $needle) || (is_array($item) && in_array_r($needle, $item, $strict))) {
-              return true;
-          }
+    if (isset($value->categoria_id)) {
+      if (!in_array($value->categoria_id, $catArr)) {
+        array_push($catArr, $value->categoria_id);  
       }
-
-      return false;
+    }
   }
 
-  public static function formatSQLDB($table)
-  {
-    global $wpdb;
+  foreach ($prepared['modalidade'] as $key => $modalidade) {
+    $categorias = array();
+    foreach ($agesArr as $age) {
+      $prepared['modalidade'][$key]['ages'][] = $age;
+    }
+    foreach ($pricesArr as $price) {
+      $prepared['modalidade'][$key]['prices'][] = $price;
+    }
+
+    $prepared['modalidade'][$key]['categorias'] = join($catArr,',');
+  }
+
+  $ageKey = $parsed['ss-amb1-age'][$prepared['modalidade'][0]['ages'][0]['min'].'__'.$prepared['modalidade'][0]['ages'][0]['max']];
+  $prepared['modalidade'][0]['prices'][0]['price_cop'] = floatval($prepared['modalidade'][0]['prices'][0]['price_cop'] * $ageKey);
+  $prepared['modalidade'][0]['prices'][0]['price_nocop'] = floatval($prepared['modalidade'][0]['prices'][0]['price_nocop'] * $ageKey);
+
+  return $prepared;
+}
+
+public static function in_array_r($needle, $haystack, $strict = false) 
+{
+  foreach ($haystack as $item) {
+    if (($strict ? $item === $needle : $item == $needle) || (is_array($item) && in_array_r($needle, $item, $strict))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+public static function formatSQLDB($table)
+{
+  global $wpdb;
     /**********************************************
     *
     *    Select All Results
@@ -1927,15 +1952,6 @@ class SeguroSaude {
       foreach ($tableResults as $key => $result) {
         $sqlTableValues .= "(";
         foreach ($result as $field => $value) {
-          // if (empty($value)) {
-          //   $sqlTableValues .= 'null,';
-          // } else {
-          //   if ($field == "id" || $field == "modalidades") {
-          //     $sqlTableValues .= $value . ',';
-          //   } else {
-          //     $sqlTableValues .= "'".$value."'" . ',';
-          //   }
-          // }
           if ($field == "id" || $field == "modalidades") {
             $sqlTableValues .= $value . ',';
           } else {
@@ -1971,4 +1987,3 @@ class SeguroSaude {
     return null;
   }
 }
-

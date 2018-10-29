@@ -1,14 +1,3 @@
-<?php 
-// echo '<pre>';
-// var_dump($prepared['ages'][0]);
-// var_dump($prepared['ages'][1]);
-// var_dump($prepared['ages'][2]);
-// var_dump($prepared['ages'][3]);
-// echo '</pre>';
-// echo '<pre>';
-// var_dump($prepared);
-// echo '</pre>';
-?>
 <div class="wrap">
   <?php if (isset($categoryWarn)) : ?>
     <div class="notice notice-error">
@@ -27,10 +16,11 @@
   <form id="frmPlano" action="process.php" method="post" class="add-plano">
     <input type="hidden" name="redirect_url" value="<?php echo admin_url('admin.php?page=seguro-saude'); ?>">
     <input type="hidden" name="plan_id" id="plan_id" value="<?php echo isset($prepared['id']) ? $prepared['id'] : '' ?>">
+    <input type="hidden" name="total_ages_edit" id="total_ages_edit" value="<?php echo isset($prepared['ages']) ? count($prepared['ages']) : 0 ?>">
     <?php if (isset($prepared)) : ?> 
       <?php foreach ($prepared['prices'] as $prices): ?>
-        <input type="hidden" name="plan_price_min[]" value="<?php echo $prices['price_cop'] ?>">
-        <input type="hidden" name="plan_price_max[]" value="<?php echo $prices['price_nocop'] ?>">
+        <input type="hidden" name="plan_price_min[]" value="<?php echo $prices['price_cop']; ?>">
+        <input type="hidden" name="plan_price_max[]" value="<?php echo $prices['price_nocop']; ?>">
       <?php endforeach; ?>
     <?php endif; ?>
     <div id="icon-options-general" class="icon32"></div>
@@ -58,8 +48,8 @@
               </h2>
               <div class="inside">
                 <div class="item--wrapper">
-                  <?php if (isset($prepared)) : foreach ($prepared['ages'] as $age): ?>
-                    <label class="label--item">
+                  <?php if (isset($prepared)) : foreach ($prepared['ages'] as $key => $age): ?>
+                    <label data-line="<?php echo $key + 1; ?>" class="label--item">
                       <input type="hidden" name="age_range_min_max__hidden[]" value="<?php echo $age['id'][0]; ?>">  
                       de
                       <input value="<?php echo $age['min']; ?>" class="small-text" type="number" name="age_range_min[]" placeholder="00" min="0" max="99" required>

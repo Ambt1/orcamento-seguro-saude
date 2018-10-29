@@ -151,17 +151,25 @@ jQuery(document).ready(function($) {
     const DOMageMax = Array.from(document.querySelectorAll('input[name="age_range_max[]"]').values());
     const DOMplans = Array.from(document.querySelectorAll('input[name="plano_category[]"]').values());
 
-    const editAgeMin = document.querySelectorAll('input[name="plan_price_min[]"]').values();
-    const editAgeMax = document.querySelectorAll('input[name="plan_price_max[]"]').values();
+    const editAgeMin = Array.from(document.querySelectorAll('input[name="plan_price_min[]"]').values());
+    const editAgeMax = Array.from(document.querySelectorAll('input[name="plan_price_max[]"]').values());
     const editPlanCategories = document.querySelectorAll('input[name="plano_category_hidden[]"]').values();
+    const editAgeTotal = parseInt(document.querySelector('#total_ages_edit').value);
+
+    console.log(editAgeMin);
 
     let editItem = 0;
     let formAction = '';
     let submitText = '';
+    let hasedtAgeMN = null;
+    let hasedtAgeMX = null;
 
+    // Load Plan
     for (const [key, item] of DOMplans.entries()) {
       let plan = {};
       let range = {};
+      let ageCount = 0;
+
       plan['name'] = item.value;
       plan['age_range'] = [];
 
@@ -173,22 +181,26 @@ jQuery(document).ready(function($) {
         plan['categories'] = edtCat.value.value.split(',');
       }
 
+      // Load Plan Ages
       for (let [keyAge, ageMins] of DOMageMin.entries()) {
-        edtAgeMN = editAgeMin.next();
-        edtAgeMX = editAgeMax.next();
         range = {
           min: ageMins.value,
           max: DOMageMax[keyAge].value,
         }
-        if (edtAgeMN.value) {
-          range['price_min'] = edtAgeMN.value.value,
-          range['price_max'] = edtAgeMX.value.value
-        }
         plan.age_range.push(range);
       }
 
-      plan.slug = makeslug(plan.name,'-');
+      // Load Plan Ages Values
+      if (editAgeTotal) {
+        while (ageCount <= (editAgeTotal - 1)) {
+          plan.age_range[ageCount]['price_min'] = editAgeMin.shift().value;
+          plan.age_range[ageCount]['price_max'] = editAgeMax.shift().value;
+          ageCount++;
+        }
+      }
 
+      // Prepare HTML
+      plan.slug = makeslug(plan.name,'-');
       if (item.nextElementSibling.id.substring(0, 18) == "plano_modalidade__") {
         item.nextElementSibling.id = "plano_modalidade__"+plan.slug;
         item.nextElementSibling.name = "plano_modalidade__"+plan.slug;

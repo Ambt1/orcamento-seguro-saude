@@ -68,8 +68,13 @@
   </form>
   <h1 class="wp-heading-inline">Para Adicionar o Formulário</h1>
   <p>Para adicionar o formulário nas páginas basta inserir a tag abaixo</p>
+  <h2>Shortcode que mostra o formulário de preenchimento do cliente</h2>
   <pre>
-    <b>[seguro-saude title="Cotação Online DESCONTOS ESPECIAIS!" button="Cálculo Online SH"]</b>
+    <b>[seguro-saude template="SLUG-DO-TEMPLATE" title="Cotação Online DESCONTOS ESPECIAIS!" button="Cálculo Online SH"]</b>
+  </pre>
+  <h2>Shortcode que mostra a tabela de preço de um determinado plano</h2>
+  <pre>
+    <b>[plano-valores plano="NOME-DO-PLANO" template="SLUG-DO-TEMPLATE" fontSize="16px" width="100%|px|em"]</b>
   </pre>
   ou dentro de um arquivo .php
   <pre>

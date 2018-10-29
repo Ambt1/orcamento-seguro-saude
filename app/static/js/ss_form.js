@@ -23,6 +23,20 @@ jQuery(document).ready(function($) {
   });
   
   $('body').on('click', 'input[name="remove_item"]', function(){
+    const DOMplans = Array.from(document.querySelectorAll('input[name="plano_category[]"]')).length;
+    const agePairs = Array.from(document.querySelectorAll('input[name*="plan_price_"]'));
+    const fullAges = parseInt($(this).parent().data("line") * 2);
+
+    if (fullAges) {
+      let numPlan = 1;
+      while (numPlan <= DOMplans) {
+        $(agePairs).eq((fullAges * numPlan) - 1).remove();
+        $(agePairs).eq((fullAges * numPlan) - 2).remove();
+        numPlan++;
+      }
+      $('#total_ages_edit').val(($('#total_ages_edit').val() - 1));
+    }
+
     $(this).parent().remove();
   });
 

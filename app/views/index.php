@@ -223,10 +223,6 @@ if (isset($_GET['page'])) {
           *    FILTER AGE
           *
           **********************************************/
-          // echo '<pre>';
-          // var_dump(count($prepared['modalidade']));
-          // echo '</pre>';
-          // exit();
           foreach ($prepared['ages_demo'] as $key => $age) {
             if (!empty($prepared['ages'])) {
               $nextStep = false;

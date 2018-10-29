@@ -203,9 +203,9 @@
   }
 }
 
-.ss-amb1-field__wrapper:nth-child(4n+1) {
+/* .ss-amb1-field__wrapper:nth-child(4n+1) {
   margin-left: 0;
-}
+} */
 
 .ss-amb1-field__wrapper--block {
   width:  100% !important;
