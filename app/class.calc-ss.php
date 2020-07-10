@@ -375,6 +375,7 @@ class SeguroSaude {
     **********************************************/
 
     $rootID = ".ss-amb1--form__wrapper ";
+    $css = '';
 
     if (array_key_exists('title', $atts)) {
       $formTitle = $atts['title'];
@@ -469,6 +470,7 @@ class SeguroSaude {
 
       $htmlID = 'pricetable-'.substr(explode('.',microtime())[1], 0, 4);
       $rootID = '#'.$htmlID;
+      $rootIDResponse = '.ss-results--plan';
       $css = '';
 
       if (array_key_exists('color', $atts)) {
@@ -499,7 +501,7 @@ class SeguroSaude {
           }
         }
 
-        $css .= preg_replace('/^(\.)/m', $rootID . '.', $style['resultStyle']);
+        $css .= preg_replace('/^(\.)/m', $rootIDResponse . '.', $style['resultStyle']);
       }
 
       wp_register_style( 'pricetable-styles', false );
@@ -557,7 +559,7 @@ class SeguroSaude {
         return self::selectPlan($action, $data, $section);
         break;
         case "delete":
-        return self::deletePlan($action, $data, $section);
+        return self::deletePlan($data);
         break;
         default:
         return $result = array("status" => false, "msg" => "Faça uma escolha");
@@ -660,6 +662,7 @@ class SeguroSaude {
   public static function processForm()
   {
     parse_str($_POST['form'], $parsed);
+
     $data = array(
       "name" => $parsed['ss-amb1-name'],
       "email" => $parsed['ss-amb1-email'],
@@ -675,40 +678,7 @@ class SeguroSaude {
     **********************************************/
     $result = self::manageDB('insert', $data, 'lead');
 
-    if (isset($result['status'])) {
-      $subject = 'SS Plugin - Um novo lead se cadastrou no site';
-      $message = '<p>Um novo usuário se cadastrou no site. Faça o login no sistema para ver todos os detalhes.</p> 
-      <p>Abaixo o nome e o email: <br>
-      <b>Nome: </b>'.$parsed['ss-amb1-name'].' <br>
-      <b>Email: </b>'.$parsed['ss-amb1-email'].' <br>
-      </p><hr>
-      <p>
-      <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
-      </p>';
-    } else {
-      $subject = 'Algum usuário tentou se cadastrar mas não conseguiu';
-      $message = '<p>O usuário'.$parsed['ss-amb1-name'].' tentou se cadastrar no site mas não conseguimos incluir no banco de dados.</p> 
-      <p>Abaixo está os dados do mesmo:
-      <b>nome: </b>'.$parsed['ss-amb1-name'].' <br>
-      <b>email: </b>'.$parsed['ss-amb1-email'].' <br>
-      <b>telefone: </b>'.$parsed['ss-amb1-phone'].' <br>
-      <b>adesao: </b>'.$parsed['ss-amb1-modalidades-categoria'].' <br>
-      <b>idades: </b>'.unserialize($parsed['ss-amb1-age']).'</p><hr>
-      <p>
-      <a href="'.admin_url().'">Acesse o site e veja os detalhes</a>
-      </p>';
-    }
-    /**********************************************
-    *
-    *    SEND EMAILS
-    *
-    **********************************************/
-    if (get_option('ss-amb1-sys-emails')) {
-      $to = get_option('ss-amb1-sys-emails');
-    } else {
-      $to = get_bloginfo('admin_email');
-    }
-    wp_mail( $to, $subject, $message);
+    self::sendEmail($parsed);
     /**********************************************
     *
     *    DO THE CALCULATIONS
@@ -780,6 +750,45 @@ class SeguroSaude {
     }
     echo json_encode($result);
     wp_die();
+  }
+
+  public static function sendEmail($body)
+  {
+    $plano = self::getPlan(intval($body['ss-amb1-modalidades-plano']));
+    $modalidade = self::selectCategory(intval($body['ss-amb1-modalidades-categoria']));
+    $ageTable = '<table><tr>';
+    $ageTable .= '<th>Faixa de Idade</th>';
+    $ageTable .= '<th>Quantidade selecionada</th>';
+    $ageTable .= '</tr>';
+    foreach ($body['ss-amb1-age'] as $ageRange => $ageCount) {
+      $ageTable .= '<tr>';
+      $ageTable .= '<td align="center">'.str_replace('__', '-', $ageRange).'</td>';
+      $ageTable .= '<td align="center">'.str_replace('__', '-', $ageCount).'</td>';
+      $ageTable .= '</tr>';
+    }
+    $ageTable .= '</table>';
+    $subject = 'SS Plugin - Um novo lead se cadastrou no site';
+    $message = '<p>Um novo usuário se cadastrou no site. Faça o login no sistema para ver todos os detalhes.</p> 
+    <p>Abaixo o nome e o email: <br>
+      <b>Nome: </b>'.$body['ss-amb1-name'].' <br>
+      <b>Email: </b>'.$body['ss-amb1-email'].' <br>
+      <b>Telefone: </b>'.$body['ss-amb1-phone'].' <br>
+      <b>Plano Escolhido: </b> '.$plano['data'][0]->name.' <br>
+      <b>Modalidade Escolhida: </b>'.$modalidade->name.' <br>
+    </p><hr>';
+    $message .= $ageTable;
+    $message .= '<p><a href="'.admin_url().'">Acesse o site e veja os detalhes</a></p>';
+    /**********************************************
+    *
+    *    SEND EMAILS
+    *
+    **********************************************/
+    if (get_option('ss-amb1-sys-emails')) {
+      $to = get_option('ss-amb1-sys-emails');
+    } else {
+      $to = get_bloginfo('admin_email');
+    }
+    wp_mail( $to, $subject, $message);
   }
 
   public static function configForm($hook)
@@ -1206,6 +1215,18 @@ class SeguroSaude {
     }
   }
 
+  private static function getPlan($id)
+  {
+    global $wpdb;
+    $result = array();
+    $table = $wpdb->prefix . 'calc_ss_planos';
+    if ($row = $wpdb->get_results("SELECT * FROM $table WHERE id = $id")) {
+      return $result = array("status" => true, "msg" => "Item pesquisado com sucesso", "data" => $row);
+    } else {
+      return $result = array("status" => false, "msg" => "Houve um erro ao adicionar os dados finais 3");
+    }
+  }
+
   private static function addCategory($action, $data, $section)
   {
     global $wpdb;
@@ -1546,6 +1567,24 @@ class SeguroSaude {
     $types = array('%d');
     
     return $wpdb->delete($table, $fields, $types);
+  }
+
+  private static function deletePlan($id)
+  {
+    global $wpdb;
+
+    $result = array();
+    $table = $wpdb->prefix . 'calc_ss_planos';
+    $fields = array(
+      'id' => $id
+    );
+    $types = array('%d');
+
+    if ($wpdb->delete($table, $fields, $types)) {
+      return $result = array("status" => true, "msg" => "Item deletado com sucesso");
+    } else {
+      return $result = array("status" => false, "msg" => "Houve um erro ao adicionar os dados finais 3");
+    }
   }
 
   private static function exportLeads()

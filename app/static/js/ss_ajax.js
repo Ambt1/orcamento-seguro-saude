@@ -149,14 +149,14 @@ jQuery(document).ready(function($) {
   function addPrices(button){
     const DOMageMin = Array.from(document.querySelectorAll('input[name="age_range_min[]"]').values());
     const DOMageMax = Array.from(document.querySelectorAll('input[name="age_range_max[]"]').values());
-    const DOMplans = Array.from(document.querySelectorAll('input[name="plano_category[]"]').values());
+    const DOMcategory = Array.from(document.querySelectorAll('input[name="plano_category[]"]').values());
 
     const editAgeMin = Array.from(document.querySelectorAll('input[name="plan_price_min[]"]').values());
     const editAgeMax = Array.from(document.querySelectorAll('input[name="plan_price_max[]"]').values());
     const editPlanCategories = document.querySelectorAll('input[name="plano_category_hidden[]"]').values();
     const editAgeTotal = parseInt(document.querySelector('#total_ages_edit').value);
 
-    console.log(editAgeMin);
+    console.log('DOMcategory', DOMcategory);
 
     let editItem = 0;
     let formAction = '';
@@ -165,13 +165,14 @@ jQuery(document).ready(function($) {
     let hasedtAgeMX = null;
 
     // Load Plan
-    for (const [key, item] of DOMplans.entries()) {
+    for (const [key, item] of DOMcategory.entries()) {
+      
       let plan = {};
       let range = {};
       let ageCount = 0;
 
-      plan['name'] = item.value;
-      plan['age_range'] = [];
+      plan.name = item.value;
+      plan.age_range = [];
 
       edtCat = editPlanCategories.next();
 
@@ -192,9 +193,12 @@ jQuery(document).ready(function($) {
 
       // Load Plan Ages Values
       if (editAgeTotal) {
-        while (ageCount <= (editAgeTotal - 1)) {
-          plan.age_range[ageCount]['price_min'] = editAgeMin.shift().value;
-          plan.age_range[ageCount]['price_max'] = editAgeMax.shift().value;
+        // while (ageCount <= (editAgeTotal - 1)) {
+        while (ageCount < editAgeTotal) {
+          if (editAgeMin.length > 0) {
+            plan.age_range[ageCount]['price_min'] = editAgeMin.shift().value;
+            plan.age_range[ageCount]['price_max'] = editAgeMax.shift().value;
+          }
           ageCount++;
         }
       }
