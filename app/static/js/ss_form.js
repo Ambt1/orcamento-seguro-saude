@@ -27,6 +27,18 @@ jQuery(document).ready(function($) {
     const agePairs = Array.from(document.querySelectorAll('input[name*="plan_price_"]'));
     const fullAges = parseInt($(this).parent().data("line") * 2);
 
+    // Check if has id
+
+    if (this.previousElementSibling.name.includes('plano_modalidade')) {
+      const categoryID = this.previousElementSibling.value;
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.value = categoryID;
+      input.name = "plano_categoria_to_delete[]";
+      
+      document.querySelector("form").append(input);
+    }
+
     if (fullAges) {
       let numPlan = 1;
       while (numPlan <= DOMplans) {

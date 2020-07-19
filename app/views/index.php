@@ -93,16 +93,16 @@ if (isset($_GET['page'])) {
           $table_name_modalidades_has_categories = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
 
           $sql = "SELECT
-                  $table_name_planos.id as 'id',
-                  $table_name_planos.name as 'name',
+                  $table_name_planos.id as 'plano_id',
                   $table_name_modalidades.id as 'modalidade_id',
-                  $table_name_modalidades.name as 'modalidade',
                   $table_name_age_by_price.id as 'age_id',
+                  $table_name_modalidades_has_categories.categorias_id as 'categoria_id',
+                  $table_name_planos.name as 'name',
+                  $table_name_modalidades.name as 'modalidade',
                   $table_name_age_by_price.age_min,
                   $table_name_age_by_price.age_max,
                   $table_name_age_by_price.price_cop,
-                  $table_name_age_by_price.price_nocop,
-                  $table_name_modalidades_has_categories.categorias_id as 'categoria_id'
+                  $table_name_age_by_price.price_nocop
 
                   FROM $table_name_planos
 
@@ -113,145 +113,256 @@ if (isset($_GET['page'])) {
                   WHERE $table_name_planos.id = $id";
           
           $item = $wpdb->get_results($sql);
-          $tAge = array();
-          $prepared = array(
-            "id" => $id,
-            "name" => $item[0]->name,
-            "modalidade" => array(),
-            "ages" => array(),
-            "ages_demo" => array(),
-            "prices" => array(),
-            "categories" => array()
-          );
+
+
+          // echo "<pre>";
+          // var_dump($item);
+          // echo "</pre>";
+
+
+          /////////
+          ///
+          ///  RHAMSES 2020
+          ///
+          /////////
+
+          $plan_id = $item[0]->plano_id;
+          $modalidade_id = 0;
+          $age_id = 0;
+          $categoria_id = 0;
+
+          $result = array();
+
+          $result['plano_id'] = $plan_id;
+          $result['name'] = $item[0]->name;
+          $result['modalidade'] = [];
+          $result['categoria'] = [];
+          $result['idadepreco'] = [];
+
+          foreach ($item as $key => $row) {
+            while ($modalidade_id != $row->modalidade_id) {
+              $modalidade_id = $row->modalidade_id;
+
+              $modalidade = array(
+                "id" => $row->modalidade_id,
+                "name" => $row->modalidade
+              );
+
+              array_push($result['modalidade'], $modalidade);
+            }
+
+            while ($categoria_id != $row->categoria_id) {
+              $categoria_id = $row->categoria_id;
+
+              $categoria = array(
+                "id" => $row->categoria_id,
+                'modalidade_id' => $modalidade_id
+              );
+
+              array_push($result['categoria'], $categoria);
+            }
+
+            while ($age_id != $row->age_id) {
+              $age_id = $row->age_id;
+
+              $idadepreco = array(
+                "id" => $row->age_id,
+                "age_max" => $row->age_max,
+                "age_min" => $row->age_min,
+                "price_cop" => $row->price_cop,
+                "price_nocop" => $row->price_nocop,
+                'modalidade_id' => $modalidade_id
+              );
+
+              array_push($result['idadepreco'], $idadepreco);
+            }
+          }
+
+          //////////////////////////// 
+          // 
+          // GET UNIQUE AGE VALUES
+          // 
+          ////////////////////////////
+
+          $age_min_ctrl = 0;
+          $age_max_ctrl = 0;
+
+          $age_min_arr = array();
+          $age_max_arr = array();
+
+          foreach ($result['idadepreco'] as $agePreco) {
+            if ($agePreco['age_min'] !== $age_min_ctrl) {
+              $age_min_ctrl = $agePreco['age_min'];
+              array_push($age_min_arr, $agePreco['age_min']);
+            }
+
+            if ($agePreco['age_max'] !== $age_max_ctrl) {
+              $age_max_ctrl = $agePreco['age_max'];
+              array_push($age_max_arr, $agePreco['age_max']);
+            }
+          }
+
+          $age_min_arr = array_unique($age_min_arr);
+          $age_max_arr = array_unique($age_max_arr);
+
+          $result['ages_list']['age_min'] = $age_min_arr;
+          $result['ages_list']['age_max'] = $age_max_arr;
+
+          $prepared = $result;
+
+          // echo '<pre>';
+          // var_dump($prepared);
+          // echo '</pre>';
+
+          echo '<script> const __objSS = ' . json_encode($prepared) . '</script>';
+
+          require('new-plano-edit.php');
+
+          // /////////
+
+          // exit();
+
+
+          // $tAge = array();
+          // $prepared = array(
+          //   "id" => $id,
+          //   "name" => $item[0]->name,
+          //   "modalidade" => array(),
+          //   "ages" => array(),
+          //   "ages_demo" => array(),
+          //   "prices" => array(),
+          //   "categories" => array()
+          // );
             
-          /**********************************************
-          *
-          *    COUNT AGES
-          *
-          **********************************************/
+          // /**********************************************
+          // *
+          // *    COUNT AGES
+          // *
+          // **********************************************/
 
-          $sql = "SELECT DISTINCT
-                  $table_name_age_by_price.age_min,
-                  $table_name_age_by_price.age_max
+          // $sql = "SELECT DISTINCT
+          //         $table_name_age_by_price.age_min,
+          //         $table_name_age_by_price.age_max
 
-                  FROM $table_name_planos
+          //         FROM $table_name_planos
 
-                  INNER JOIN $table_name_modalidades ON $table_name_planos.id = $table_name_modalidades.planos_id
-                  INNER JOIN $table_name_age_by_price ON $table_name_age_by_price.modalidades_id = $table_name_modalidades.id
-                  LEFT JOIN $table_name_modalidades_has_categories ON $table_name_modalidades_has_categories.modalidades_id = $table_name_modalidades.id
+          //         INNER JOIN $table_name_modalidades ON $table_name_planos.id = $table_name_modalidades.planos_id
+          //         INNER JOIN $table_name_age_by_price ON $table_name_age_by_price.modalidades_id = $table_name_modalidades.id
+          //         LEFT JOIN $table_name_modalidades_has_categories ON $table_name_modalidades_has_categories.modalidades_id = $table_name_modalidades.id
 
-                  WHERE $table_name_planos.id = $id";
+          //         WHERE $table_name_planos.id = $id";
           
-          $totalAgeResults = count($wpdb->get_results($sql));
+          // $totalAgeResults = count($wpdb->get_results($sql));
 
-          foreach ($item as $key => $value) {
+          // foreach ($item as $key => $value) {
             
-            /**********************************************
-            *
-            *    MODALIDADE BLOCK
-            *
-            **********************************************/
-            $modalidade = array(
-              "id" => $value->modalidade_id,
-              "value" => $value->modalidade
-            );
+          //   /**********************************************
+          //   *
+          //   *    MODALIDADE BLOCK
+          //   *
+          //   **********************************************/
+          //   $modalidade = array(
+          //     "id" => $value->modalidade_id,
+          //     "value" => $value->modalidade
+          //   );
 
-            if (!in_array($modalidade, $prepared['modalidade'])) {
-              array_push($prepared['modalidade'], $modalidade);  
-            }
+          //   if (!in_array($modalidade, $prepared['modalidade'])) {
+          //     array_push($prepared['modalidade'], $modalidade);  
+          //   }
 
-            /**********************************************
-            *
-            *    AGE BLOCK
-            *
-            **********************************************/
+          //   /**********************************************
+          //   *
+          //   *    AGE BLOCK
+          //   *
+          //   **********************************************/
             
-            $ages = array(
-              "min" => $item[$key]->age_min,
-              "max" => $item[$key]->age_max,
-              "id" => array($item[$key]->age_id)
-            );
+          //   $ages = array(
+          //     "min" => $item[$key]->age_min,
+          //     "max" => $item[$key]->age_max,
+          //     "id" => array($item[$key]->age_id)
+          //   );
 
-            if (!in_array_r($ages['id'], $prepared['ages_demo'])) {
-              array_push($prepared['ages_demo'], $ages);  
-            }
+          //   if (!in_array_r($ages['id'], $prepared['ages_demo'])) {
+          //     array_push($prepared['ages_demo'], $ages);  
+          //   }
 
-            // if (!in_array($ages, $prepared['ages'])) {
-            //   array_push($prepared['ages'], $ages);  
-            // }
+          //   // if (!in_array($ages, $prepared['ages'])) {
+          //   //   array_push($prepared['ages'], $ages);  
+          //   // }
 
-            /**********************************************
-            *
-            *    PRICE BLOCK
-            *
-            **********************************************/
+          //   *********************************************
+          //   *
+          //   *    PRICE BLOCK
+          //   *
+          //   *********************************************
 
-            $prices = array(
-              "price_cop" => $item[$key]->price_cop,
-              "price_nocop" => $item[$key]->price_nocop
-            );
+          //   $prices = array(
+          //     "price_cop" => $item[$key]->price_cop,
+          //     "price_nocop" => $item[$key]->price_nocop
+          //   );
 
-            if (!in_array($prices, $prepared['prices'])) {
-              array_push($prepared['prices'], $prices);  
-            }
+          //   if (!in_array($prices, $prepared['prices'])) {
+          //     array_push($prepared['prices'], $prices);  
+          //   }
 
-            /**********************************************
-            *
-            *    CATEGOIRES BLOCK
-            *
-            **********************************************/
+          //   /**********************************************
+          //   *
+          //   *    CATEGOIRES BLOCK
+          //   *
+          //   **********************************************/
 
-            if (!in_array($value->categoria_id, $prepared['categories'])) {
-              array_push($prepared['categories'], $value->categoria_id);  
-            }
-          }
+          //   if (!in_array($value->categoria_id, $prepared['categories'])) {
+          //     array_push($prepared['categories'], $value->categoria_id);  
+          //   }
+          // }
 
-          foreach ($prepared['modalidade'] as $key => $modalidade) {
-            $categorias = array();
-            foreach ($item as $value) {
-              if ($modalidade['value'] == $value->modalidade) {
-                if (!in_array($value->categoria_id, $categorias)) {
-                  array_push($categorias, $value->categoria_id);
-                }
-              }
-            };
-            $prepared['modalidade'][$key]['categorias'] = join($categorias,',');
-          }
+          // foreach ($prepared['modalidade'] as $key => $modalidade) {
+          //   $categorias = array();
+          //   foreach ($item as $value) {
+          //     if ($modalidade['value'] == $value->modalidade) {
+          //       if (!in_array($value->categoria_id, $categorias)) {
+          //         array_push($categorias, $value->categoria_id);
+          //       }
+          //     }
+          //   };
+          //   $prepared['modalidade'][$key]['categorias'] = join($categorias,',');
+          // }
 
-          /**********************************************
-          *
-          *    FILTER AGE
-          *
-          **********************************************/
-          foreach ($prepared['ages_demo'] as $key => $age) {
-            if (!empty($prepared['ages'])) {
-              $nextStep = false;
-              $tempIdArr = array();
+          // /**********************************************
+          // *
+          // *    FILTER AGE
+          // *
+          // **********************************************/
+          // foreach ($prepared['ages_demo'] as $key => $age) {
+          //   if (!empty($prepared['ages'])) {
+          //     $nextStep = false;
+          //     $tempIdArr = array();
 
-              foreach ($prepared['ages'] as $tAgeKey => $item) {
-                if ($age['min'] == $item['min'] && $age['max'] == $item['max']) {
-                  $prepared['ages'][$tAgeKey]['id'][0] = $item['id'][0] . ',' . $age['id'][0];
-                } else {
-                  $nextStep = true;
-                }
-              }
+          //     foreach ($prepared['ages'] as $tAgeKey => $item) {
+          //       if ($age['min'] == $item['min'] && $age['max'] == $item['max']) {
+          //         $prepared['ages'][$tAgeKey]['id'][0] = $item['id'][0] . ',' . $age['id'][0];
+          //       } else {
+          //         $nextStep = true;
+          //       }
+          //     }
 
-              if (!empty($tempIdArr)) {
-                array_push($prepared['ages'], $tempIdArr);
-              }
+          //     if (!empty($tempIdArr)) {
+          //       array_push($prepared['ages'], $tempIdArr);
+          //     }
 
-              if ($nextStep) {
-                array_push($prepared['ages'], $age);
-              }
+          //     if ($nextStep) {
+          //       array_push($prepared['ages'], $age);
+          //     }
 
-            } else {
-              array_push($prepared['ages'], $age);
-            }
-          }
-          // Remove DB return from array
-          unset($prepared['ages_demo']);
-          // Does POG to slice only the necessary fields
-          $prepared['ages'] = array_slice($prepared['ages'], 0, $totalAgeResults);
+          //   } else {
+          //     array_push($prepared['ages'], $age);
+          //   }
+          // }
+          // // Remove DB return from array
+          // unset($prepared['ages_demo']);
+          // // Does POG to slice only the necessary fields
+          // $prepared['ages'] = array_slice($prepared['ages'], 0, $totalAgeResults);
+
           // echo '<pre>';
           // var_dump($prepared);
           // echo '</pre>';
@@ -262,7 +373,7 @@ if (isset($_GET['page'])) {
           *
           **********************************************/
 
-          require('new-plano.php');
+          // require('new-plano.php');
 
         } else {
           $table = $wpdb->prefix . 'calc_ss_planos';
