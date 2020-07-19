@@ -132,6 +132,7 @@ class SeguroSaude {
 
   public static function processPlan()
   {
+
     /**********************************************
     *
     *
@@ -142,6 +143,13 @@ class SeguroSaude {
 
     parse_str($_POST['plan'], $parsed);
 
+    // echo "<pre>";
+    // echo "<h1>parsed</h1>";
+    // var_dump($parsed);
+    // echo "</pre>";
+
+    // exit();
+
     $plansDB = array();
     $categories = array();
     $prices = array();
@@ -149,137 +157,248 @@ class SeguroSaude {
 
     $plansDB['plan_title'] = $parsed['plano_title'];
 
-    foreach ($parsed as $key => $value) {
-      $headers = explode("__", $key);
-      $plan = array();
-      $items = array();
-      // Add categories to the Categories Array
-      if (isset($headers[1]) && $headers[1] == "plan_category") {
-        array_push($categories, $value);
-      }
+    /////////
+    ///
+    ///  RHAMSES 2020
+    ///
+    /////////
 
-      // Do The Magic
-      if (is_array($headers) && count($headers) == 5) {
+    $newPlans = array();
 
-        $slug = $headers[0];
+    if (!array_key_exists('age_range_min', $parsed)) {
+      echo "precisa de age min";
+      exit();
+    }
 
-        foreach ($parsed['plano_category'] as $title) {
-          if ($slug == sanitize_title( $title )) {
-            $plan['modalidade']['name'] = $title;
-          }
-        }
+    if (!array_key_exists('age_range_max', $parsed)) {
+      echo "precisa de age max";
+      exit();
+    }
 
-        if (isset($parsed['plano_modalidade__'.$slug])) {
-          $plan['modalidade']['id'] = $parsed['plano_modalidade__'.$slug];
-        }
+    if (!array_key_exists('plano_title', $parsed)) {
+      echo "precisa de plano_title";
+      exit();
+    }
 
-        /**********************************************
-        *
-        * Check Ages From $parsed to the final object
-        *
-        **********************************************/
+    if (array_key_exists('plano_title', $parsed)) {
+      $newPlans['plan_title'] = $parsed['plano_title'];
+    }
 
-        if (isset($headers[1])) {
-          $items['min'] = intval($headers[1]);  
-        } else {
-          $items['min'] = '';
-        }
+    if (array_key_exists('plan_id', $parsed)) {
+      $newPlans['plan_id'] = $parsed['plan_id'];
+    }
 
-        if (isset($headers[2])) {
-          $items['max'] = intval($headers[2]);
-        } else {
-          $items['max'] = '';
-        }
+    if (array_key_exists('plano_categoria_to_delete', $parsed)) {
+      $newPlans['plano_categoria_to_delete'] = $parsed['plano_categoria_to_delete'];
+    }
 
-        /**********************************************
-        *
-        *   Sort Prices
-        *
-        **********************************************/
-        if (isset($headers[3])) {
-          switch ($headers[3]) {
-            case "coparticipacao":
-            $items['price_cop'] = $value;
-            break;
-            case "participacao":
-            $items['price_nocop'] = $value;
-            break;
-          }
-          $plan['modalidade']['age_price'][] = $items;
-        }
+    if (array_key_exists('plano_category', $parsed)) {
 
-        /**********************************************
-        *
-        *
-        *    MAGIC!!!!!!!
-        *
-        *
-        **********************************************/
-        if (array_key_exists($slug, $plansDB) ) {
-          $masterKey = 0;
-          $priceExists = array();
-          $localPrices = $plan['modalidade']['age_price'][0];
-          foreach ($plansDB[$slug]['modalidade']['age_price'] as $key => $plansDBPrice) {
-            if ($plansDBPrice['min'] == $localPrices['min'] && $plansDBPrice['max'] == $localPrices['max']) {
-              $agePrices = array_merge($plansDBPrice, $localPrices);
+      $newPlans['categorias'] = [];
 
-              if (!empty($plansDB[$slug]['modalidade']['true_age'])) {
-                foreach ($plansDB[$slug]['modalidade']['true_age'] as $trueAge) {
-                  if ($trueAge['min'] != $agePrices['min'] && $trueAge['max'] != $agePrices['max'] && $trueAge['price_cop'] != $agePrices['price_cop'] && $trueAge['price_nocop'] != $agePrices['price_nocop']) {
-                   if (!in_array($agePrices, $plansDB[$slug]['modalidade']['true_age'])) {
-                    $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;      
-                  }
-                }
+      foreach ($parsed['plano_category'] as $key => $category) {
+        $slugify = sanitize_title( $category );
+        $copartPrices = array();
+        $nopartPrices = array();
+        $categoryID = null;
+
+        // If Edit, check if it has already an ID
+        if (isset($parsed['plano_modalidade_id'])) {
+          if (in_array($key, $parsed['plano_modalidade_id'])) {
+            foreach ($parsed['plano_modalidade_id'] as $item) {
+              if ($item == $key) {
+                $categoryID = $item;
               }
-            } else {
-              $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;
             }
-          } else {
-            $plansDB[$slug]['modalidade']['age_price'][] = $localPrices;
           }
         }
-      }
-      else {
-        $plansDB[$slug] = $plan;  
-      }
-    }
-  }
 
-    /**********************************************
-    *
-    *
-    *    Check if has ages_id and then insert it
-    *    Filter Control Key from
-    *    Master Object
-    *
-    *
-    **********************************************/
-    if (isset($parsed['age_range_min_max__hidden'])) {
-      $savedAges = $parsed['age_range_min_max__hidden'];
-      $savedAgesCount = 0;
+        // Get Categories
+        $planModalidades = $parsed[$slugify . '__plan_category']; 
 
-      foreach ($plansDB as $key => $plan) {
-        if ($key != "plan_title" && $key != "plan_id") {
-          unset($plansDB[$key]['modalidade']['age_price']);
-          foreach ($plan['modalidade']['true_age'] as $ageKey => $ages) {
-            $plansDB[$key]['modalidade']['true_age'][$ageKey]['id'] = explode(',', $savedAges[$ageKey])[$savedAgesCount];
-          }
-          $savedAgesCount++;
+        //  Get Prices
+        foreach ($parsed['age_range_min'] as $key => $age_min) {
+          $age_max = $parsed['age_range_max'][$key];
+          $copartPrice = $parsed[$slugify . '__' . $age_min . '__' . $age_max . '__coparticipacao__price'];
+          $nopartPrice = $parsed[$slugify . '__' . $age_min . '__' . $age_max . '__participacao__price'];
+
+          array_push($copartPrices, array(
+            "min" => $age_min,
+            "max" => $age_max,
+            "price" => $copartPrice
+          ));
+
+          array_push($nopartPrices, array(
+            "min" => $age_min,
+            "max" => $age_max,
+            "price" => $nopartPrice
+          ));
         }
+
+        array_push($newPlans['categorias'], array(
+          'name' => $category,
+          'id' => $categoryID,
+          'coparticipacao' => $copartPrices,
+          'participacao'  => $nopartPrices,
+          'modalidades' => $planModalidades
+        ));
+
       }
+    } else {
+      echo "nao tem plano category";
+      exit();
     }
-    /**********************************************
-    *
-    *    Adding Categories
-    *
-    **********************************************/
-    $count = 0;
-    foreach ($plansDB as $key => $value) {
-      if ($key != "plan_title") {
-        $plansDB[$key]['categories'] = isset($categories[$count]) ? $categories[$count] : 0;
-        $count++;
-      }
-    }
+
+    // echo "<hr><pre>";
+    // echo "<h1>NEW PLANS</h1>";
+    // var_dump($newPlans);
+    // echo "</pre>";
+
+    // exit();
+
+
+    ////////////////////////
+
+  //   foreach ($parsed as $key => $value) {
+  //     $headers = explode("__", $key);
+  //     $plan = array();
+  //     $items = array();
+  //     // Add categories to the Categories Array
+  //     if (isset($headers[1]) && $headers[1] == "plan_category") {
+  //       array_push($categories, $value);
+  //     }
+
+  //     // Do The Magic
+  //     if (is_array($headers) && count($headers) == 5) {
+
+  //       $slug = $headers[0];
+
+  //       foreach ($parsed['plano_category'] as $title) {
+  //         if ($slug == sanitize_title( $title )) {
+  //           $plan['modalidade']['name'] = $title;
+  //         }
+  //       }
+
+  //       if (isset($parsed['plano_modalidade__'.$slug])) {
+  //         $plan['modalidade']['id'] = $parsed['plano_modalidade__'.$slug];
+  //       }
+
+  //       /**********************************************
+  //       *
+  //       * Check Ages From $parsed to the final object
+  //       *
+  //       **********************************************/
+
+  //       if (isset($headers[1])) {
+  //         $items['min'] = intval($headers[1]);  
+  //       } else {
+  //         $items['min'] = '';
+  //       }
+
+  //       if (isset($headers[2])) {
+  //         $items['max'] = intval($headers[2]);
+  //       } else {
+  //         $items['max'] = '';
+  //       }
+
+  //       /**********************************************
+  //       *
+  //       *   Sort Prices
+  //       *
+  //       **********************************************/
+  //       if (isset($headers[3])) {
+  //         switch ($headers[3]) {
+  //           case "coparticipacao":
+  //           $items['price_cop'] = $value;
+  //           break;
+  //           case "participacao":
+  //           $items['price_nocop'] = $value;
+  //           break;
+  //         }
+  //         $plan['modalidade']['age_price'][] = $items;
+  //       }
+
+  //       /**********************************************
+  //       *
+  //       *
+  //       *    MAGIC!!!!!!!
+  //       *
+  //       *
+  //       **********************************************/
+  //       if (array_key_exists($slug, $plansDB) ) {
+  //         $masterKey = 0;
+  //         $priceExists = array();
+  //         $localPrices = $plan['modalidade']['age_price'][0];
+  //         foreach ($plansDB[$slug]['modalidade']['age_price'] as $key => $plansDBPrice) {
+  //           if ($plansDBPrice['min'] == $localPrices['min'] && $plansDBPrice['max'] == $localPrices['max']) {
+  //             $agePrices = array_merge($plansDBPrice, $localPrices);
+
+  //             if (!empty($plansDB[$slug]['modalidade']['true_age'])) {
+  //               foreach ($plansDB[$slug]['modalidade']['true_age'] as $trueAge) {
+  //                 if ($trueAge['min'] != $agePrices['min'] && $trueAge['max'] != $agePrices['max'] && $trueAge['price_cop'] != $agePrices['price_cop'] && $trueAge['price_nocop'] != $agePrices['price_nocop']) {
+  //                  if (!in_array($agePrices, $plansDB[$slug]['modalidade']['true_age'])) {
+  //                   $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;      
+  //                 }
+  //               }
+  //             }
+  //           } else {
+  //             $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;
+  //           }
+  //         } else {
+  //           $plansDB[$slug]['modalidade']['age_price'][] = $localPrices;
+  //         }
+  //       }
+  //     }
+  //     else {
+  //       $plansDB[$slug] = $plan;  
+  //     }
+  //   }
+  // }
+
+  //   /**********************************************
+  //   *
+  //   *
+  //   *    Check if has ages_id and then insert it
+  //   *    Filter Control Key from
+  //   *    Master Object
+  //   *
+  //   *
+  //   **********************************************/
+  //   if (isset($parsed['age_range_min_max__hidden'])) {
+  //     $savedAges = $parsed['age_range_min_max__hidden'];
+  //     $savedAgesCount = 0;
+
+  //     foreach ($plansDB as $key => $plan) {
+  //       if ($key != "plan_title" && $key != "plan_id") {
+  //         unset($plansDB[$key]['modalidade']['age_price']);
+  //         foreach ($plan['modalidade']['true_age'] as $ageKey => $ages) {
+  //           $plansDB[$key]['modalidade']['true_age'][$ageKey]['id'] = explode(',', $savedAges[$ageKey])[$savedAgesCount];
+  //         }
+  //         $savedAgesCount++;
+  //       }
+  //     }
+  //   }
+  //   /**********************************************
+  //   *
+  //   *    Adding Categories
+  //   *
+  //   **********************************************/
+  //   $count = 0;
+  //   foreach ($plansDB as $key => $value) {
+  //     if ($key != "plan_title") {
+  //       $plansDB[$key]['categories'] = isset($categories[$count]) ? $categories[$count] : 0;
+  //       $count++;
+  //     }
+  //   }
+
+  //   echo "<hr><pre>";
+  //   echo "<h1>parsed</h1>";
+  //   var_dump($plansDB);
+  //   echo "</pre>";
+
+
+
+
     /**********************************************
     *
     *
@@ -288,13 +407,13 @@ class SeguroSaude {
     *
     **********************************************/
     if ($_POST['action'] == "new_plan") {
-      $result = self::manageDB('insert', $plansDB, 'plan');
+      $result = self::manageDB('insert', $newPlans, 'plan');
       echo json_encode($result);
     }
 
     if ($_POST['action'] == "edit_plan") {
       $plansDB['plan_id'] = $parsed['plan_id'];  
-      $result = self::manageDB('edit', $plansDB, 'plan');
+      $result = self::manageDB('edit', $newPlans, 'plan');
       echo json_encode($result);
     }
 
@@ -1265,7 +1384,7 @@ class SeguroSaude {
     } else {
       return $result = array("status" => false, "msg" => "Houve um erro ao adicionar os dados finais 3");
     }
-  }
+  } 
 
   private static function addPlan($action, $data, $section)
   {
@@ -1277,7 +1396,7 @@ class SeguroSaude {
     *
     **********************************************/
     $table = $wpdb->prefix . 'calc_ss_planos';
-    $totalModalidades = count($data) - 1; // all first level keys from array data, minus the "plain_title" one
+    $totalModalidades = count($data['categorias']); // all first level keys from array data, minus the "plain_title" one
     $fields = array(
       'name' => $data['plan_title'],
       'slug' => sanitize_title($data['plan_title']),
@@ -1292,58 +1411,54 @@ class SeguroSaude {
       *    INSERT MODALIDADES
       *
       **********************************************/
-      foreach ($data as $key => $item) {
-        if ($key != "plan_title") {
-          $table = $wpdb->prefix . 'calc_ss_modalidades';
-          $modalidade = str_replace("_", " ", $item['modalidade']['name']);
-          $fields = array(
-            'name' => $modalidade,  
-            'planos_id' => $planID
-          );
-          $types = array('%s','%d');
-          $wpdb->insert($table, $fields, $types);
+      foreach ($data['categorias'] as $item) {  
+        $table = $wpdb->prefix . 'calc_ss_modalidades';
+        $modalidade = $item['name'];
+        $fields = array(
+          'name' => $modalidade,  
+          'planos_id' => $planID
+        );
+        $types = array('%s','%d');
+        $wpdb->insert($table, $fields, $types);
 
-          if ($modalidadeID = $wpdb->insert_id) {
-            /**********************************************
-            *
-            *    INSERT MODALIDADES CATEGORIES
-            *
-            **********************************************/
-            if ($item['categories']) {
-              foreach ($item['categories'] as $category) {
-                $table = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
-                $fields = array(
-                  'modalidades_id' => $modalidadeID,
-                  'categorias_id' => intval($category)
-                );
-                $types = array('%d','%d');
-                $wpdb->insert($table, $fields, $types);
-              }
+        if ($modalidadeID = $wpdb->insert_id) {
+          /**********************************************
+          *
+          *    INSERT MODALIDADES CATEGORIES
+          *
+          **********************************************/
+          if ($item['modalidades']) {
+            foreach ($item['modalidades'] as $category) {
+              $table = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
+              $fields = array(
+                'modalidades_id' => $modalidadeID,
+                'categorias_id' => intval($category)
+              );
+              $types = array('%d','%d');
+              $wpdb->insert($table, $fields, $types);
             }
-            /**********************************************
-            *
-            *    INSERT PRICE AND AGES
-            *
-            **********************************************/
-            if ($item['modalidade']['true_age']) {
-              foreach ($item['modalidade']['true_age'] as $priceAge) {
-                if (array_key_exists('price_cop', $priceAge) && array_key_exists('price_nocop', $priceAge)) {
-                  $table = $wpdb->prefix . 'calc_ss_age_by_price';
-                  $fields = array(
-                    'age_min' => $priceAge['min'],
-                    'age_max' => $priceAge['max'],
-                    'price_cop' => $priceAge['price_cop'],
-                    'price_nocop' => $priceAge['price_nocop'],
-                    'modalidades_id' => $modalidadeID
-                  );
-                  $types = array('%d','%d','%d','%d');
-                  $wpdb->insert($table, $fields, $types);
-                }
-              }
-            }
-          } else {
-            return $result = array("status" => false, "msg" => "House um erro ao adicionar o plano 2");
           }
+          /**********************************************
+          *
+          *    INSERT PRICE AND AGES
+          *
+          **********************************************/
+          if ($item['coparticipacao']) {
+            foreach ($item['coparticipacao'] as $key => $priceAge) {
+              $table = $wpdb->prefix . 'calc_ss_age_by_price';
+              $fields = array(
+                'age_min' => $priceAge['min'],
+                'age_max' => $priceAge['max'],
+                'price_cop' => $priceAge['price'],
+                'price_nocop' => $item['participacao'][$key]['price'],
+                'modalidades_id' => $modalidadeID
+              );
+              $types = array('%d','%d','%d','%d');
+              $wpdb->insert($table, $fields, $types);
+            }
+          }
+        } else {
+          return $result = array("status" => false, "msg" => "House um erro ao adicionar o plano 2");
         }
       }
       return $result = array("status" => true, "msg" => "Mensagem inclusa em sucesso.");
@@ -1370,16 +1485,63 @@ class SeguroSaude {
     }
   }
 
+  private static function addModalidadesCategories($data)
+  {
+    global $wpdb;
+    $result = array();
+    $table = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
+    $fields = array(
+      'modalidades_id' => intval($data['modalidadeID']),
+      'categorias_id' => intval($data['category'])
+    );
+    $types = array('%d','%d');
+
+    try {
+      $wpdb->insert($table, $fields, $types);
+      return $result = array("status" => true, "msg" => "Item incluído com sucesso",  "id" => $wpdb->insert_id, "data" => $fields);
+    } catch (Exception $e) {
+      var_dump($e);
+      return $result = array("status" => false, "msg" => "Houve um erro ao adicionar o Status");
+    }
+  }
+
+  private static function addAgePrice($data)
+  {
+    global $wpdb;
+    $result = array();
+    $table = $wpdb->prefix . 'calc_ss_age_by_price';
+    $fields = array(
+      'age_min' => $data['age_min'],
+      'age_max' => $data['age_max'],
+      'price_cop' => $data['price_cop'],
+      'price_nocop' => $data['price_nocop'],
+      'modalidades_id' => $data['modalidadeID']
+    );
+    $types = array('%d','%d','%d','%d');
+
+    try {
+      $wpdb->insert($table, $fields, $types);
+      return $result = array("status" => true, "msg" => "Item incluído com sucesso",  "id" => $wpdb->insert_id, "data" => $fields);
+    } catch (Exception $e) {
+      var_dump($e);
+      return $result = array("status" => false, "msg" => "Houve um erro ao adicionar o Status");
+    }
+  }
+
   private static function editPlan($data)
   {
     global $wpdb;
+    // echo "<pre>";
+    // var_dump($data);
+    // echo "</pre>";
+    // exit();
     /**********************************************
     *
     *    UPDATE PLAN
     *
     **********************************************/
     $table = $wpdb->prefix . 'calc_ss_planos';
-    $totalModalidades = count($data) - 1; // all first level keys from array data, minus the "plain_title" one
+    $totalModalidades = count($data['categorias']);
     $fields = array(
       'name' => $data['plan_title'],
       'slug' => sanitize_title( $data['plan_title'] ),
@@ -1387,83 +1549,88 @@ class SeguroSaude {
       'updated_at' => current_time( 'mysql' )
     );
     $types = array('%s','%s','%d', '%s');
+
     if ( $wpdb->update($table, $fields, array('ID' => intval($data['plan_id'])), $types, array('%d')) ) {
       /**********************************************
       *
       *    UPDATE MODALIDADES
       *
       **********************************************/
-      foreach ($data as $key => $item) {
-        if ($key != "plan_title" && $key != "plan_id") {
-          $table = $wpdb->prefix . 'calc_ss_modalidades';
-          $modalidade = $item['modalidade']['name'];
-          $fields = array(
-            'name' => $modalidade,  
-            'planos_id' => $data['plan_id'],
-            'updated_at' => current_time( 'mysql' )
-          );
-          $types = array('%s','%d');
-          if (isset($item['modalidade']['id'])) {
-            $modalidadeID = $item['modalidade']['id'];
-            $sqlOrder = $wpdb->update($table, $fields, array('ID' => $item['modalidade']['id']), $types, array('%d'));
-          } else {
-            $wpdb->insert($table, $fields, $types);
-            $modalidadeID = $wpdb->insert_id;
-          }
+      $table = $wpdb->prefix . 'calc_ss_modalidades';
+      //
+      // FIRST WE DELETE BASE ON THE OBJECT
+      //
+      if (isset($data['plano_categoria_to_delete'])) {
+        foreach ($data['plano_categoria_to_delete'] as $key => $item) {
+          $wpdb->delete($table, array('id' => $item), array('%d'));
+          self::deleteAgePrice($item);
+          self::deleteModalidadesCategories($item);
+        }
+      }
+      //
+      // THEN WE LOOP, THIS TIME TO INSERT EVERYTING
+      // OF IDS WE HAVE
+      //
+      foreach ($data['categorias'] as $key => $item) {
 
-          if ($modalidadeID) {
-            /**********************************************
-            *
-            *    UPDATE MODALIDADES CATEGORIES
-            *
-            **********************************************/
-            if (isset($item['categories'])) {
-              $table = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
-              // delete all categories of this Modalidade
-              $wpdb->delete($table, array('modalidades_id' => $modalidadeID), array('%d'));
-              // if delete is successfull, add all new categories
-              if (isset($item['categories'])) {
-                foreach ($item['categories'] as $category) {
-                  $fields = array(
-                    'modalidades_id' => intval($modalidadeID),
-                    'categorias_id' => intval($category)
-                  );
-                  $types = array('%d','%d');
-                  $wpdb->insert($table, $fields, $types);
-                }
-              }
+        $types = array('%s','%d');
+
+        $fields = array(
+          'name' => $item['name'],  
+          'planos_id' => $data['plan_id'],
+          'updated_at' => current_time( 'mysql' )
+        );
+
+        if (!is_null($item['id'])) {
+
+          $wpdb->update($table, $fields, array('ID' => $item['id']));
+
+          $modalidadeID = $item['id'];
+
+        } else {
+          $wpdb->insert($table, $fields, $types);
+          $modalidadeID = $wpdb->insert_id;
+        }
+
+        if ($modalidadeID) {
+          /**********************************************
+          *
+          *    UPDATE MODALIDADES CATEGORIES
+          *
+          **********************************************/
+          self::deleteModalidadesCategories($modalidadeID);
+          
+          if (isset($item['modalidades'])) {
+            foreach ($item['modalidades'] as $category) {
+              $addModalidadesCategories = array(
+                'modalidadeID' => $modalidadeID,
+                'category' => $category
+              );
+              self::addModalidadesCategories($addModalidadesCategories);
             }
-            /**********************************************
-            *
-            *    DELETE AGE PRICE MODALIDADES
-            *
-            **********************************************/
-            self::deleteAgePrice($modalidadeID);
-            /**********************************************
-            *
-            *    UPDATE PRICE AND AGES
-            *
-            **********************************************/
-            if (isset($item['modalidade']['true_age'])) {
-              foreach ($item['modalidade']['true_age'] as $priceAge) {
-                if (array_key_exists('price_cop', $priceAge) && array_key_exists('price_nocop', $priceAge)) {
-                  $table = $wpdb->prefix . 'calc_ss_age_by_price';
-                  $fields = array(
-                    'age_min' => $priceAge['min'],
-                    'age_max' => $priceAge['max'],
-                    'price_cop' => $priceAge['price_cop'],
-                    'price_nocop' => $priceAge['price_nocop'],
-                    'modalidades_id' => $modalidadeID
-                  );
-                  $types = array('%d','%d','%d','%d');
-                  // Check if row exists
-                  $wpdb->insert($table, $fields, $types);
-                }
-              }
-            }
-          } else {
-            return $result = array("status" => false, "msg" => "House um erro ao adicionar o plano 2");
           }
+          /**********************************************
+          *
+          *    DELETE AGE PRICE MODALIDADES
+          *
+          **********************************************/
+          self::deleteAgePrice($modalidadeID);
+          /**********************************************
+          *
+          *    UPDATE PRICE AND AGES
+          *
+          **********************************************/
+          foreach ($item['coparticipacao'] as $copartKey => $copartItem) {
+            self::addAgePrice(array(
+              'age_min' => $copartItem['min'],
+              'age_max' => $copartItem['max'],
+              'price_cop' => $copartItem['price'],
+              'price_nocop' => $item['participacao'][$copartKey]['price'],
+              'modalidadeID' => $modalidadeID
+            ));
+          }
+        } else {
+          return $result = array("status" => false, "msg" => "House um erro ao adicionar o plano 2");
         }
       }
       return $result = array("status" => true, "msg" => "Plano atualizado com sucesso.");
@@ -1523,6 +1690,11 @@ class SeguroSaude {
     }
   }
 
+  private static function editAgePrice($data)
+  {
+
+  }
+
   private static function deleteCategory($action, $data, $section)
   {
     global $wpdb;
@@ -1561,6 +1733,19 @@ class SeguroSaude {
 
     $result = array();
     $table = $wpdb->prefix . 'calc_ss_age_by_price';
+    $fields = array(
+      'modalidades_id' => $id
+    );
+    $types = array('%d');
+    
+    return $wpdb->delete($table, $fields, $types);
+  }
+
+  private static function deleteModalidadesCategories($id) {
+    global $wpdb;
+
+    $result = array();
+    $table = $wpdb->prefix . 'calc_ss_modalidades_has_categories';
     $fields = array(
       'modalidades_id' => $id
     );

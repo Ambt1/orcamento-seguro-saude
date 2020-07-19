@@ -149,14 +149,12 @@ jQuery(document).ready(function($) {
   function addPrices(button){
     const DOMageMin = Array.from(document.querySelectorAll('input[name="age_range_min[]"]').values());
     const DOMageMax = Array.from(document.querySelectorAll('input[name="age_range_max[]"]').values());
-    const DOMcategory = Array.from(document.querySelectorAll('input[name="plano_category[]"]').values());
+    const DOMcategory = Array.from(document.querySelectorAll('input[name*="plano_category["]').values());
 
     const editAgeMin = Array.from(document.querySelectorAll('input[name="plan_price_min[]"]').values());
     const editAgeMax = Array.from(document.querySelectorAll('input[name="plan_price_max[]"]').values());
     const editPlanCategories = document.querySelectorAll('input[name="plano_category_hidden[]"]').values();
     const editAgeTotal = parseInt(document.querySelector('#total_ages_edit').value);
-
-    console.log('DOMcategory', DOMcategory);
 
     let editItem = 0;
     let formAction = '';
@@ -172,7 +170,28 @@ jQuery(document).ready(function($) {
       let ageCount = 0;
 
       plan.name = item.value;
+      plan.slug = makeslug(plan.name,'-');
+
+      if (item.nextElementSibling.value.length > 0) {
+        const originalTitle = item.nextElementSibling.value;
+        const originalTitleSlug = makeslug(originalTitle,'-');
+        if (document.querySelector('#plano_modalidade__' + originalTitleSlug)) {
+          plan.id = document.querySelector('#plano_modalidade__' + originalTitleSlug).value;     
+          editItem++;
+          // write the ids onto the form
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.value = plan.id;
+          input.name = 'plano_modalidade_id[]';
+          document.querySelector('form').append(input);
+        }
+      }
+
       plan.age_range = [];
+
+      if (typeof __objSS != 'undefined') {
+        plan.modalidades = __objSS.categoria.filter(item => item.modalidade_id === plan.id);        
+      }
 
       edtCat = editPlanCategories.next();
 
@@ -184,10 +203,24 @@ jQuery(document).ready(function($) {
 
       // Load Plan Ages
       for (let [keyAge, ageMins] of DOMageMin.entries()) {
-        range = {
-          min: ageMins.value,
-          max: DOMageMax[keyAge].value,
+        let range = {};
+
+        if (typeof __objSS != 'undefined') {
+          var age_db = __objSS.idadepreco.find(item => {
+            if (item.modalidade_id === plan.id && ageMins.value === item.age_min && DOMageMax[keyAge].value === item.age_max) {
+              return item;
+            }
+          });
+
+          if (age_db) {
+            range.price_cop = age_db.price_cop;
+            range.price_nocop = age_db.price_nocop;
+          }
         }
+
+        range.min = ageMins.value;
+        range.max = DOMageMax[keyAge].value;
+
         plan.age_range.push(range);
       }
 
@@ -204,11 +237,13 @@ jQuery(document).ready(function($) {
       }
 
       // Prepare HTML
-      plan.slug = makeslug(plan.name,'-');
+      
       if (item.nextElementSibling.id.substring(0, 18) == "plano_modalidade__") {
         item.nextElementSibling.id = "plano_modalidade__"+plan.slug;
         item.nextElementSibling.name = "plano_modalidade__"+plan.slug;
       }
+
+      console.log("plan", plan);
 
       createHTML(plan, (html) => {
         $("#step1").fadeOut('slow', function(){
@@ -216,6 +251,8 @@ jQuery(document).ready(function($) {
         });
       });
     }
+
+    console.log(editItem);
 
     if (editItem == 0) {
       submitText = 'Inserir novo plano de saúde';
@@ -436,9 +473,9 @@ jQuery(document).ready(function($) {
       let checked = false;
 
       for (modalidade of modalidades) {
-        if (typeof(plan.categories) != "undefined") {
-          for (category of plan.categories) {
-            if (category == modalidade.id) {
+        if (plan.modalidades) {
+          for (plan_mod of plan.modalidades) {
+            if (plan_mod.id == modalidade.id) {
               checked = "checked";
               break;
             } else {
@@ -459,11 +496,11 @@ jQuery(document).ready(function($) {
         htmlPrices += `<div class="wrapper--item"><h3 class="ss-category--title">Faixa Etária: <b>${price.min} a ${price.max}</b></h3>
                 <div class="ss-category--wrapper ss-category--cop">
                   <h4>Valor com Co Participação</h4>
-                  <input value="${(price.price_min) ? price.price_min : ''}" type="text" name="${plan.slug}__${price.min}__${price.max}__coparticipacao__price" class='large-text' placeholder="199,99" required>
+                  <input value="${(price.price_cop) ? price.price_cop : ''}" type="text" name="${plan.slug}__${price.min}__${price.max}__coparticipacao__price" class='large-text' placeholder="199,99" required>
                 </div>
                 <div class="ss-category--wrapper ss-category--nocop">
                   <h4>Valor sem Co Participação</h4>
-                  <input value="${(price.price_max) ? price.price_max : ''}" type="text" name="${plan.slug}__${price.min}__${price.max}__participacao__price" class='large-text' placeholder="199,99" required>
+                  <input value="${(price.price_nocop) ? price.price_nocop : ''}" type="text" name="${plan.slug}__${price.min}__${price.max}__participacao__price" class='large-text' placeholder="199,99" required>
                 </div></div>`;
       };
       /**********************************************
