@@ -22,9 +22,6 @@
           <label class="screen-reader-text" for="cb-select-all-1">Selecionar todos</label>
           <input id="cb-select-all-1" type="checkbox">
         </td>
-        <th>
-          id
-        </th>
         <th scope="col" id="title" class="manage-column column-title column-primary sortable desc">
          <span>Nome</span>
        </th>
@@ -43,9 +40,6 @@
         <th scope="row" class="check-column">     
           <input id="cb-select-1" type="checkbox" name="leads[<?php echo $item->id; ?>]" value="1">
         </th>
-        <td>
-          <?php echo $item->id; ?>
-        </td>
         <td class="" data-colname="Título">
           <strong>
             <a class="row-title" href="<?php echo admin_url('admin.php?page=seguro-saude-leads&action=view&id='.$item->id) ?>" aria-label="<?php echo $item->name; ?> (Editar)"><?php echo $item->name; ?></a>
