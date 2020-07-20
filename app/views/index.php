@@ -318,6 +318,7 @@ if (isset($_GET['page'])) {
                 INNER JOIN $categories ON $leads.categorias_id = $categories.id
                 LEFT JOIN $status ON $leads.status_id = $status.id
                 $where
+                ORDER BY created_at DESC
                 LIMIT $page, $limit";
 
         $row = $wpdb->get_results($sql);
