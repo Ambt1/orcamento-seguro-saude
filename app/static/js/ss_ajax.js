@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
   let __line_id = '';
   let __modalidades = '';
 
-  $('form:not(#ss-amb1-config)').on("submit", function(e){
+  $('form:not(#ss-amb1-config):not(.noajax)').on("submit", function(e){
     e.preventDefault();
     const action = $('input[name="action"]').val();
     switch (action) {

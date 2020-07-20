@@ -1,5 +1,7 @@
 <?php 
 global $wpdb;
+// var_dump($_POST);
+// exit();
 if (isset($_GET['page'])) {
  switch ($_GET['page']) {
     case 'seguro-saude':
@@ -251,8 +253,86 @@ if (isset($_GET['page'])) {
                 WHERE $leads.id = $id";
         $lead = $wpdb->get_row($sql);
         require('leads-details.php');
+      } elseif (isset($_GET['action']) && $_GET['action'] == 'delete'){
+        $id = sanitize_key( $_GET['id'] );
+        $result = deleteLead($id);
+        loadLeadsList($result);
       } else {
-        $sqlLeads = $wpdb->get_results("SELECT COUNT(id) as `total` FROM $leads");
+        loadLeadsList();
+      }
+    break;
+    default:
+      echo 'peeee';
+    break;
+  } 
+}
+
+if ($_POST['action'] === 'trash') {
+  if (array_key_exists('leads', $_POST)) {
+    $data = array(
+      'table' => 'calc_ss_leads',
+      'items' => $_POST['leads']
+    );
+    bulkDelete($data);
+  }
+}
+
+function bulkDelete($data) {
+  global $wpdb;
+  $result = array();
+  try {
+    if (!array_key_exists('table', $data)) {
+      throw new Exception("Faltou campo table", 1);
+    }
+
+    if (!array_key_exists('items', $data)) {
+      throw new Exception("Faltou campo items", 1);
+    }
+
+    $table = $wpdb->prefix . $data['table'];
+    $types = array('%d');
+
+    foreach ($data['items'] as $id => $item) {
+      $fields = array(
+        'id' => $id
+      );
+
+      $wpdb->delete($table, $fields, $types);
+    }
+
+    return $result = array("status" => true, "msg" => "Item deletado com sucesso");
+
+  } catch (Exception $e) {
+    var_dump($e);
+  }
+
+}
+
+function deleteLead($id) {
+  global $wpdb;
+  $result = array();
+  $table = $wpdb->prefix . 'calc_ss_leads';
+  $fields = array(
+    'id' => $id
+  );
+  $types = array('%d');
+  if ($wpdb->delete($table, $fields, $types)) {
+    return $result = array("status" => true, "msg" => "Item deletado com sucesso");
+  } else {
+    return $result = array("status" => false, "msg" => "Houve um erro ao adicionar os dados finais 3");
+  }
+}
+
+function loadLeadsList($result = null)
+{
+  global $wpdb;
+
+  $leads = $wpdb->prefix . 'calc_ss_leads';
+  $status = $wpdb->prefix . 'calc_ss_status';
+  $categories = $wpdb->prefix . 'calc_ss_categories';
+  $limit = 10;
+
+  $sqlLeads = $wpdb->get_results("SELECT COUNT(id) as `total` FROM $leads");
         $totalLeads = intval($sqlLeads[0]->total);
         $totalPages = ceil($totalLeads / $limit);
         $currentPage = isset($_GET['pagen']) ? $_GET['pagen'] : 1;
@@ -324,12 +404,6 @@ if (isset($_GET['page'])) {
         $row = $wpdb->get_results($sql);
         $leadsMessage = nl2br(get_option('ss-amb1-msg-leads'));
         require('leads-list.php');
-      }
-    break;
-    default:
-      echo 'peeee';
-    break;
-  } 
 }
 
 function in_array_r($needle, $haystack, $strict = false) {
