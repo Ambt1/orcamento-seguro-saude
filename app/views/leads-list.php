@@ -1,3 +1,8 @@
+<?php if($result): ?>
+  <div class="notice notice-success">
+    <p><?php echo $result['msg']; ?></p>
+  </div>
+<?php endif; ?>
 <?php if($leadsMessage): ?>
   <div class="notice notice-success">
     <p><?php echo $leadsMessage; ?></p>
@@ -9,6 +14,7 @@
     <a target="_blank" href="<?php echo admin_url('admin-post.php?action=export_leads'); ?>" class="page-title-action export-button">Exportar lista</a>  
   <?php endif ?>
   <p>Abaixo está listado todos os interessados cadastrados. Para visualizar as informações basta clicar no nome de cada um deles. </p>
+  <form action="<?php echo admin_url('admin.php?page=seguro-saude-leads'); ?>" method="POST" class="noajax">
   <table class="wp-list-table widefat fixed striped posts fix-responsive">
     <thead>
       <tr>
@@ -33,9 +39,9 @@
    </thead>
    <tbody id="the-list">
     <?php foreach ($row as $item) : ?>
-      <tr id="post-1" class="">
+      <tr id="post-1" class="<?php echo (array_key_exists($item->id, $_POST['leads'])) ? 'hide' : ''; ?>">
         <th scope="row" class="check-column">     
-          <input id="cb-select-1" type="checkbox" name="post[]" value="1">
+          <input id="cb-select-1" type="checkbox" name="leads[<?php echo $item->id; ?>]" value="1">
         </th>
         <td>
           <?php echo $item->id; ?>
@@ -80,34 +86,44 @@
  </tfoot>
 </table>
 <div class="tablenav bottom">
-<?php if ($totalLeads > 10): ?>
-  <div class="tablenav-pages">
-    <span class="displaying-num"><?php echo $totalLeads; ?> itens</span>
-    <span class="pagination-links">
-      <a class="first-page button" <?php echo ($firstPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$firstPageUrl"); ?>">
-        <span class="screen-reader-text">Primeira página</span>
-        <span aria-hidden="true">«</span>
-      </a>
-      <a class="last-page button" href="<?php echo admin_url("$previousPageUrl"); ?>" <?php echo ($previousPage) ? '' : 'disabled' ?>>
-        <span class="screen-reader-text">Página Anterior</span>
-        <span aria-hidden="true">‹</span>
-      </a>
-      <span class="screen-reader-text">Página atual</span>
-      <span id="table-paging" class="paging-input">
-        <span class="tablenav-paging-text"><?php echo $currentPage; ?> de 
+  <?php if (current_user_can( 'manage_options' ) ): ?>
+    <div class="alignleft actions bulkactions">
+      <label for="bulk-action-selector-bottom" class="screen-reader-text">Selecionar ação em massa</label><select name="action" id="bulk-action-selector-bottom">
+        <option value="-1">Ações em massa</option>
+        <option value="trash">Apagar todos os dados</option>
+      </select>
+      <button type="submit" class="button action">Aplicar</button>
+    </div>
+  <?php endif; ?>
+  <?php if ($totalLeads > 10): ?>
+    <div class="tablenav-pages">
+      <span class="displaying-num"><?php echo $totalLeads; ?> itens</span>
+      <span class="pagination-links">
+        <a class="first-page button" <?php echo ($firstPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$firstPageUrl"); ?>">
+          <span class="screen-reader-text">Primeira página</span>
+          <span aria-hidden="true">«</span>
+        </a>
+        <a class="last-page button" href="<?php echo admin_url("$previousPageUrl"); ?>" <?php echo ($previousPage) ? '' : 'disabled' ?>>
+          <span class="screen-reader-text">Página Anterior</span>
+          <span aria-hidden="true">‹</span>
+        </a>
+        <span class="screen-reader-text">Página atual</span>
+        <span id="table-paging" class="paging-input">
+          <span class="tablenav-paging-text"><?php echo $currentPage; ?> de 
             <span class="total-pages"><?php echo $totalPages; ?></span>
+          </span>
         </span>
+        <a class="next-page button" <?php echo ($nextPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$nextPageUrl"); ?>">
+          <span class="screen-reader-text">Próxima página</span>
+          <span aria-hidden="true">›</span>
+        </a>
+        <a class="last-page button" <?php echo ($lastPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$lastPageUrl"); ?>">
+          <span class="screen-reader-text">Última página</span>
+          <span aria-hidden="true">»</span>
+        </a>
       </span>
-      <a class="next-page button" <?php echo ($nextPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$nextPageUrl"); ?>">
-        <span class="screen-reader-text">Próxima página</span>
-        <span aria-hidden="true">›</span>
-      </a>
-      <a class="last-page button" <?php echo ($lastPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$lastPageUrl"); ?>">
-        <span class="screen-reader-text">Última página</span>
-        <span aria-hidden="true">»</span>
-      </a>
-    </span>
-  </div>
-<?php endif ?>
+    </div>
+  <?php endif ?>
 </div>
+</form>
 </div>

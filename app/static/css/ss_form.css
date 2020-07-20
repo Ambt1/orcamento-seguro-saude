@@ -85,3 +85,7 @@
 .fix-responsive td:not(.column-primary)::before {
  position: static !important;
 }
+
+.hide {
+  display: none;
+}

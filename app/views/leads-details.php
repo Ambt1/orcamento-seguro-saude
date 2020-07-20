@@ -65,9 +65,13 @@
       </div>
     </div>
   </div>
-  <div class="clear">
-    <br>
-    <?php submit_button('Editar Interessado', $type = 'primary', $name = 'submit', $wrap = true, $other_attributes = ''); ?>
+  <div class="edit-tag-actions clear" style="padding-top: 4em;">
+    <div style="float: left; vertical-align: middle;">
+      <?php submit_button('Editar Interessado', $type = 'primary', $name = 'submit', $wrap = false, $other_attributes = ''); ?>
+    </div>
+    <span id="delete-link">
+      <a class="delete" href="<?php echo admin_url('admin.php?page=seguro-saude-leads&action=delete&id='.$lead->id); ?>">Excluir</a>
+    </span>
   </div>
 </form>
 </div>
