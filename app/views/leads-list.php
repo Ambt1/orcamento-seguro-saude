@@ -16,6 +16,9 @@
           <label class="screen-reader-text" for="cb-select-all-1">Selecionar todos</label>
           <input id="cb-select-all-1" type="checkbox">
         </td>
+        <th>
+          id
+        </th>
         <th scope="col" id="title" class="manage-column column-title column-primary sortable desc">
          <span>Nome</span>
        </th>
@@ -34,6 +37,9 @@
         <th scope="row" class="check-column">     
           <input id="cb-select-1" type="checkbox" name="post[]" value="1">
         </th>
+        <td>
+          <?php echo $item->id; ?>
+        </td>
         <td class="" data-colname="Título">
           <strong>
             <a class="row-title" href="<?php echo admin_url('admin.php?page=seguro-saude-leads&action=view&id='.$item->id) ?>" aria-label="<?php echo $item->name; ?> (Editar)"><?php echo $item->name; ?></a>
@@ -73,21 +79,35 @@
    </tr>
  </tfoot>
 </table>
+<div class="tablenav bottom">
 <?php if ($totalLeads > 10): ?>
-  <div class="tablenav">
-    <div class="tablenav-pages">
-      <span class="displaying-num">Total de registros</span>
-      <?php if ($previousPage): ?>
-        <a class='prev-page disabled' title='Página Anterior' href='<?php echo admin_url("$previousPageUrl"); ?>'>&lsaquo;</a>
-      <?php endif; ?>
-      <span class="paging-input">
-        <span class='current-page'><?php echo $currentPage; ?></span> de 
-        <span class='total-pages'><?php echo $totalLeads; ?></span>
+  <div class="tablenav-pages">
+    <span class="displaying-num"><?php echo $totalLeads; ?> itens</span>
+    <span class="pagination-links">
+      <a class="first-page button" <?php echo ($firstPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$firstPageUrl"); ?>">
+        <span class="screen-reader-text">Primeira página</span>
+        <span aria-hidden="true">«</span>
+      </a>
+      <a class="last-page button" href="<?php echo admin_url("$previousPageUrl"); ?>" <?php echo ($previousPage) ? '' : 'disabled' ?>>
+        <span class="screen-reader-text">Página Anterior</span>
+        <span aria-hidden="true">‹</span>
+      </a>
+      <span class="screen-reader-text">Página atual</span>
+      <span id="table-paging" class="paging-input">
+        <span class="tablenav-paging-text"><?php echo $currentPage; ?> de 
+            <span class="total-pages"><?php echo $totalPages; ?></span>
+        </span>
       </span>
-      <?php if ($nextPage): ?>
-        <a class='next-page' title='Próxima Página' href='<?php echo admin_url("$nextPageUrl"); ?>'>&rsaquo;</a>  
-      <?php endif; ?>
-    </div>
-  </div>  
+      <a class="next-page button" <?php echo ($nextPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$nextPageUrl"); ?>">
+        <span class="screen-reader-text">Próxima página</span>
+        <span aria-hidden="true">›</span>
+      </a>
+      <a class="last-page button" <?php echo ($lastPage) ? '' : 'disabled' ?> href="<?php echo admin_url("$lastPageUrl"); ?>">
+        <span class="screen-reader-text">Última página</span>
+        <span aria-hidden="true">»</span>
+      </a>
+    </span>
+  </div>
 <?php endif ?>
+</div>
 </div>
