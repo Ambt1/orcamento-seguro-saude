@@ -20,10 +20,9 @@
             <dd><?php echo date('d-m-Y H:m:s', strtotime($lead->created_at)); ?></dd>
             <dt>Status:</dt>
             <dd>
-              <select name="lead-status" id="lead-status" required> 
+              <select name="lead-status" id="lead-status"> 
                 <option value="" selected>Selecionar</option>
-                <?php foreach ($statusResults as $status) : 
-                  var_dump($lead->status);
+                <?php foreach ($statusResults as $status) :
                   if (!is_null($lead->status) && intval($lead->status) === intval($status->id) ) {
                     $selected = "selected";
                   } else {
@@ -34,6 +33,18 @@
                 <?php endforeach; ?>
               </select>
             </dd>
+            <?php if (user_can( get_current_user_id(), 'manage_options' )) : ?>
+              <dt>Associar este lead à um corretor</dt>
+              <dd>
+                <select name="current-corretor" id="current-corretor"> 
+                  <option selected value="">Selecionar</option>
+                  <?php foreach ($corretores as $corretor) : ?>
+                    <option <?php selected($lead->corretor, $corretor->data->ID, true); ?> value="<?php echo $corretor->data->ID ?>"><?php echo $corretor->data->user_nicename; ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <br>
+              </dd>
+            <?php endif; ?>
             <dt>Observações</dt>
             <dd>
               <textarea name="lead-obs" id="lead-obs" cols="80"><?php echo isset($lead->obs) ? $lead->obs : ''; ?></textarea>
@@ -69,9 +80,11 @@
     <div style="float: left; vertical-align: middle;">
       <?php submit_button('Editar Interessado', $type = 'primary', $name = 'submit', $wrap = false, $other_attributes = ''); ?>
     </div>
-    <span id="delete-link">
-      <a class="delete" href="<?php echo admin_url('admin.php?page=seguro-saude-leads&action=delete&id='.$lead->id); ?>">Excluir</a>
-    </span>
+    <?php if (user_can( get_current_user_id(), 'manage_options' )) : ?>
+      <span id="delete-link">
+        <a class="delete" href="<?php echo admin_url('admin.php?page=seguro-saude-leads&action=delete&id='.$lead->id); ?>">Excluir</a>
+      </span>
+    <?php endif; ?>
   </div>
 </form>
 </div>
