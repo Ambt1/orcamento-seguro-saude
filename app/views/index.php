@@ -1,7 +1,5 @@
 <?php 
 global $wpdb;
-// var_dump($_POST);
-// exit();
 if (isset($_GET['page'])) {
  switch ($_GET['page']) {
     case 'seguro-saude':
@@ -239,7 +237,9 @@ if (isset($_GET['page'])) {
       if (isset($_GET['action']) && $_GET['action'] == 'view') {
         $statusSql = "SELECT id, name FROM $status";
         $statusResults = $wpdb->get_results($statusSql);
-
+        $corretores = get_users(array(
+          'role' => 'corretor'
+        ));
         $id = $_GET['id'];
         $sql = "SELECT 
                 $leads.id,
@@ -249,6 +249,7 @@ if (isset($_GET['page'])) {
                 $leads.created_at,
                 $leads.ages_selected,
                 $leads.status_id as 'status',
+                $leads.corretor_id as 'corretor',
                 $leads.obs,
                 $categories.name as 'modalidade'
                 FROM $leads
@@ -341,9 +342,13 @@ function loadLeadsList($result = null)
         $currentPage = isset($_GET['pagen']) ? $_GET['pagen'] : 1;
         
         // Random separation for users
-        if (current_user_can('author') || current_user_can('editor') || current_user_can('contributor')) {
+        if (
+            current_user_can('corretor') || 
+            current_user_can('author') || 
+            current_user_can('editor') || 
+            current_user_can('contributor')) {
           $user_id = get_current_user_id();
-          $where = 'WHERE responsible = ' . $user_id;
+          $where = 'WHERE corretor_id = ' . $user_id;
         } else {
           $where = '';
         }
@@ -395,6 +400,7 @@ function loadLeadsList($result = null)
                 $leads.telefone,
                 $leads.created_at,
                 $leads.responsible,
+                $leads.corretor_id,
                 $categories.name as 'modalidade',
                 $status.name as 'status'
                 FROM $leads

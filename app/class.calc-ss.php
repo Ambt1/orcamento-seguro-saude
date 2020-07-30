@@ -7,6 +7,7 @@ class SeguroSaude {
   {
     if ( ! self::$initiated ) {
       self::initHooks();
+      self::createRole();
     }
   }
 
@@ -27,6 +28,7 @@ class SeguroSaude {
 
   public static function adminPages()
   {
+
     add_menu_page(
       'Seguro Saúde',
       'Seguro Saúde',
@@ -248,156 +250,6 @@ class SeguroSaude {
       echo "nao tem plano category";
       exit();
     }
-
-    // echo "<hr><pre>";
-    // echo "<h1>NEW PLANS</h1>";
-    // var_dump($newPlans);
-    // echo "</pre>";
-
-    // exit();
-
-
-    ////////////////////////
-
-  //   foreach ($parsed as $key => $value) {
-  //     $headers = explode("__", $key);
-  //     $plan = array();
-  //     $items = array();
-  //     // Add categories to the Categories Array
-  //     if (isset($headers[1]) && $headers[1] == "plan_category") {
-  //       array_push($categories, $value);
-  //     }
-
-  //     // Do The Magic
-  //     if (is_array($headers) && count($headers) == 5) {
-
-  //       $slug = $headers[0];
-
-  //       foreach ($parsed['plano_category'] as $title) {
-  //         if ($slug == sanitize_title( $title )) {
-  //           $plan['modalidade']['name'] = $title;
-  //         }
-  //       }
-
-  //       if (isset($parsed['plano_modalidade__'.$slug])) {
-  //         $plan['modalidade']['id'] = $parsed['plano_modalidade__'.$slug];
-  //       }
-
-  //       /**********************************************
-  //       *
-  //       * Check Ages From $parsed to the final object
-  //       *
-  //       **********************************************/
-
-  //       if (isset($headers[1])) {
-  //         $items['min'] = intval($headers[1]);  
-  //       } else {
-  //         $items['min'] = '';
-  //       }
-
-  //       if (isset($headers[2])) {
-  //         $items['max'] = intval($headers[2]);
-  //       } else {
-  //         $items['max'] = '';
-  //       }
-
-  //       /**********************************************
-  //       *
-  //       *   Sort Prices
-  //       *
-  //       **********************************************/
-  //       if (isset($headers[3])) {
-  //         switch ($headers[3]) {
-  //           case "coparticipacao":
-  //           $items['price_cop'] = $value;
-  //           break;
-  //           case "participacao":
-  //           $items['price_nocop'] = $value;
-  //           break;
-  //         }
-  //         $plan['modalidade']['age_price'][] = $items;
-  //       }
-
-  //       /**********************************************
-  //       *
-  //       *
-  //       *    MAGIC!!!!!!!
-  //       *
-  //       *
-  //       **********************************************/
-  //       if (array_key_exists($slug, $plansDB) ) {
-  //         $masterKey = 0;
-  //         $priceExists = array();
-  //         $localPrices = $plan['modalidade']['age_price'][0];
-  //         foreach ($plansDB[$slug]['modalidade']['age_price'] as $key => $plansDBPrice) {
-  //           if ($plansDBPrice['min'] == $localPrices['min'] && $plansDBPrice['max'] == $localPrices['max']) {
-  //             $agePrices = array_merge($plansDBPrice, $localPrices);
-
-  //             if (!empty($plansDB[$slug]['modalidade']['true_age'])) {
-  //               foreach ($plansDB[$slug]['modalidade']['true_age'] as $trueAge) {
-  //                 if ($trueAge['min'] != $agePrices['min'] && $trueAge['max'] != $agePrices['max'] && $trueAge['price_cop'] != $agePrices['price_cop'] && $trueAge['price_nocop'] != $agePrices['price_nocop']) {
-  //                  if (!in_array($agePrices, $plansDB[$slug]['modalidade']['true_age'])) {
-  //                   $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;      
-  //                 }
-  //               }
-  //             }
-  //           } else {
-  //             $plansDB[$slug]['modalidade']['true_age'][] = $agePrices;
-  //           }
-  //         } else {
-  //           $plansDB[$slug]['modalidade']['age_price'][] = $localPrices;
-  //         }
-  //       }
-  //     }
-  //     else {
-  //       $plansDB[$slug] = $plan;  
-  //     }
-  //   }
-  // }
-
-  //   /**********************************************
-  //   *
-  //   *
-  //   *    Check if has ages_id and then insert it
-  //   *    Filter Control Key from
-  //   *    Master Object
-  //   *
-  //   *
-  //   **********************************************/
-  //   if (isset($parsed['age_range_min_max__hidden'])) {
-  //     $savedAges = $parsed['age_range_min_max__hidden'];
-  //     $savedAgesCount = 0;
-
-  //     foreach ($plansDB as $key => $plan) {
-  //       if ($key != "plan_title" && $key != "plan_id") {
-  //         unset($plansDB[$key]['modalidade']['age_price']);
-  //         foreach ($plan['modalidade']['true_age'] as $ageKey => $ages) {
-  //           $plansDB[$key]['modalidade']['true_age'][$ageKey]['id'] = explode(',', $savedAges[$ageKey])[$savedAgesCount];
-  //         }
-  //         $savedAgesCount++;
-  //       }
-  //     }
-  //   }
-  //   /**********************************************
-  //   *
-  //   *    Adding Categories
-  //   *
-  //   **********************************************/
-  //   $count = 0;
-  //   foreach ($plansDB as $key => $value) {
-  //     if ($key != "plan_title") {
-  //       $plansDB[$key]['categories'] = isset($categories[$count]) ? $categories[$count] : 0;
-  //       $count++;
-  //     }
-  //   }
-
-  //   echo "<hr><pre>";
-  //   echo "<h1>parsed</h1>";
-  //   var_dump($plansDB);
-  //   echo "</pre>";
-
-
-
 
     /**********************************************
     *
@@ -1037,6 +889,7 @@ class SeguroSaude {
     $data = array(
       "status" => intval($_POST['lead-status']),
       "obs" => $_POST['lead-obs'],
+      "corretor" => $_POST['current-corretor'],
       "id" => intval($_POST['item_id'])
     );
     $results = self::ManageDb('edit', $data, 'lead');
@@ -1400,11 +1253,50 @@ class SeguroSaude {
     }
   }
 
+  private static function getCorretor() {
+    $currentCorretorID = (get_option( 'last_corretor' )) ? get_option( 'last_corretor' ) : 0;
+    $currentCorretor = get_user_by('ID', $currentCorretorID);
+    $corretores = get_users(array(
+      'role' => 'corretor'
+    ));
+    $newCorretores = array();
+    // first item
+    $newCorretores[] = array(
+      'id' => $currentCorretor->data->ID,
+      'login' => $currentCorretor->data->user_login
+    );
+
+    foreach ($corretores as $key => $corretor) {
+      if ($corretor->data->ID > $currentCorretorID) {
+        $newCorretores[] = array(
+          'id' => $corretor->data->ID,
+          'login' => $corretor->data->user_login
+        );
+      }
+    }
+
+    foreach ($corretores as $key => $corretor) {
+      if ($corretor->data->ID < $currentCorretorID) {
+        $newCorretores[] = array(
+          'id' => $corretor->data->ID,
+          'login' => $corretor->data->user_login
+        );
+      }
+    }
+
+    $nextCorretor = next($newCorretores);
+
+    // Save the option on DB
+    update_option( 'last_corretor', $nextCorretor['id'] );
+    return $nextCorretor;
+  }
+
   private static function addLead($data)
   {
     global $wpdb;
     $result = array();
     $table = $wpdb->prefix . 'calc_ss_leads';
+    $corretor = self::getCorretor();
     $fields = array(
       "name" => $data["name"],
       "email" => $data["email"],
@@ -1412,9 +1304,10 @@ class SeguroSaude {
       "categorias_id" => $data["adesao"],
       "ages_selected" => serialize($data["ages"]),
       "responsible" => $data["responsible"],
+      "corretor_id" => $corretor['id'],
       'created_at' => current_time( 'mysql' )
     );
-    $types = array('%s', '%s', '%s', '%d', '%s', '%d');
+    $types = array('%s', '%s', '%s', '%d', '%s', '%d', '%d');
     if ($wpdb->insert($table, $fields, $types)) {
       return $result = array("status" => true, "msg" => "Item incluído com sucesso",  "id" => $wpdb->insert_id, "data" => $fields);
     } else {
@@ -1716,6 +1609,7 @@ class SeguroSaude {
     $table = $wpdb->prefix . 'calc_ss_leads';
     $fields = array(
       "status_id" => $data["status"],
+      "corretor_id" => $data["corretor"],
       "obs" => $data["obs"],
     );
     $types = array('%d', '%s');
@@ -1825,6 +1719,76 @@ class SeguroSaude {
     INNER JOIN $categories ON $leads.categorias_id = $categories.id";
     $results = $wpdb->get_results($sql);
     return $results;
+  }
+
+  private static function createRole() {
+    /**********************************************
+    *
+    *    Role Functions
+    *
+    **********************************************/
+    function edit_user_profile_corretor_form($user) {
+      $corretorAtivoValue = (get_the_author_meta( 'corretor_ativo', $user->ID )) ? get_the_author_meta( 'corretor_ativo', $user->ID ) : 'S';
+      echo '<table class="form-table">
+      <tr>
+      <th>
+        Ativo para receber leads?
+      </th>
+      <td>
+        <span>
+          <input name="corretor_ativo" type="radio" '.checked($corretorAtivoValue, 'S', false).' value="S">
+          Sim
+        </span>
+        <span>
+          <input name="corretor_ativo" type="radio" '.checked($corretorAtivoValue, 'N', false).' value="N">
+          Não
+        </span>
+      </td>
+      </tr>
+      </table>';
+    }
+
+    function edit_user_profile_corretor_update($user_id){
+      if (!empty($_POST['corretor_ativo'])) {
+        update_usermeta( $user_id, 'corretor_ativo', $_POST['corretor_ativo'] );
+      }
+    }
+
+    function change_media_label(){
+      global $menu, $submenu;
+      if (wp_get_current_user()->roles[0] == 'corretor') {
+        $newsubmenu = array();
+        $newMenu = array();
+        if (array_key_exists('profile.php', $submenu)) {
+          $newsubmenu['profile.php'] = $submenu['profile.php'];
+        }
+
+        if (array_key_exists('seguro-saude', $submenu)) {
+          $newsubmenu['seguro-saude'] = $submenu['seguro-saude'];
+        }
+
+        $submenu = $newsubmenu;
+
+        foreach ($menu as $key => $value) {
+          if ($value[0] == 'Perfil' || $value[0] == 'Seguro Saúde') {
+            $newMenu[$key] = $value;
+          };
+        }
+
+        $menu = $newMenu;
+      }
+    }
+    /**********************************************
+    *
+    *    New Role as Corretor
+    *
+    **********************************************/
+    add_role( 'corretor', 'Corretor', get_role( 'contributor' )->capabilities );
+    add_action( 'edit_user_profile', 'edit_user_profile_corretor_form');
+    add_action( 'show_user_profile', 'edit_user_profile_corretor_form');
+    add_action( 'personal_options_update', 'edit_user_profile_corretor_update' );
+    add_action( 'edit_user_profile_update', 'edit_user_profile_corretor_update' );
+    add_action( 'admin_menu', 'change_media_label' );
   }
 
   /**********************************************
