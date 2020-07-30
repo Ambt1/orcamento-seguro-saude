@@ -21,6 +21,42 @@
       <label for="config-email">Endereço de email recipiente (um endereço por linha)</label>
       <textarea required aria=required="true" name="config-email" id="config-email" cols="80" rows="10"><?php echo ($leadsEmail) ? $leadsEmail : ''; ?></textarea>
     </div>
+    <hr>
+    <h2>Redirecionar formulário para página de sucesso</h2>
+    <div class="form-field">
+      <div class="field">
+        <input id="showPostType" name="showPostType" type="checkbox" <?php ($redirectOption) ? checked( true, true ) : '' ?>>
+        <label for="showPostType">
+          Habilitar o redirecionamento da página após o processamento do formulário
+        </label>
+      </div>
+      <div id="postListContainerWrapper" class="">
+        <h3>Selecione o destino do formulário</h3>
+        <span>
+          <input type="radio" id="postTypePagina" name="postType" value="pagesList" <?php ($redirectOption) ? checked( $redirectOption['postType'], 'pagesList' ) : '' ?>>
+          <label for="postTypePagina">Página</label>
+        </span>
+        <span>
+          <input type="radio" id="postTypePost" name="postType" value="postList" <?php ($redirectOption) ? checked( $redirectOption['postType'], 'postList' ) : '' ?>>
+          <label for="postTypePost">Post</label>
+        </span>
+        <p></p>
+        <div class="field">
+          <select name="pagesList" class="postListContainer <?php echo ($redirectOption['postType'] == 'pagesList') ? '' : 'hide' ?>" >
+            <option value="">Selecione a página</option>
+            <?php foreach ($pagesListConfig as $page) : ?>
+              <option <?php ($redirectOption['postType'] == 'pagesList') ? selected( $redirectOption['postTypeID'], $page->ID ) : '' ?> value="<?php echo $page->ID; ?>"><?php echo $page->post_title; ?></option>
+            <?php endforeach; ?>
+          </select>
+          <select name="postList" class="postListContainer <?php echo ($redirectOption['postType'] == 'postList') ? '' : 'hide' ?>">
+            <option value="">Selecione o post</option>
+            <?php foreach ($postsListConfig as $post) : ?>
+              <option <?php ($redirectOption['postType'] == 'postList') ? selected( $redirectOption['postTypeID'], $post->ID ) : '' ?> value="<?php echo $post->ID; ?>"><?php echo $post->post_title; ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+      </div>
+    </div>
     <?php submit_button( $text = "Editar Dados", $type = 'primary', $name = 'submit', $wrap = true, $other_attributes = null ) ?>
   </form>
 </div>

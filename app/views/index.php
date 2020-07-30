@@ -50,6 +50,9 @@ if (isset($_GET['page'])) {
           $leadsMessage = get_option('ss-amb1-msg-leads');
           $feformMsgSuccess = (get_option('ss-amb1-feform-success')) ? get_option('ss-amb1-feform-success') : '';
           $leadsEmail = join("\n", explode(',', get_option('ss-amb1-sys-emails')));
+          $pagesListConfig = get_pages(array('post_status' => 'publish'));
+          $postsListConfig = get_posts(array('post_status' => 'publish'));
+          $redirectOption = (get_option( 'ss-amb1-redirect' )) ? unserialize(get_option( 'ss-amb1-redirect' )) : null;
           require('config.php');
           require('config-geral.php');
         }
