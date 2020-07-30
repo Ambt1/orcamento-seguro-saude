@@ -64,6 +64,24 @@ jQuery(document).ready(function($) {
     }
   });
 
+  if ($("#showPostType").length > 0) {
+    if ($("#showPostType:checked").length === 1) {
+      $('#postListContainerWrapper').remove('hide');
+    } else {
+      $('#postListContainerWrapper').toggleClass('hide');
+    }
+  }
+
+  $("#showPostType").on("click", function(){
+    $('#postListContainerWrapper').toggleClass('hide');
+  });
+
+  $('input[name="postType"]').on('click', function(){
+    const selectID = $(this).val();
+    $('.postListContainer').addClass('hide');
+    $(`select[name=${selectID}]`).removeClass('hide');
+  });
+
   if (getParameterByName('slug')) {
     loadPreview();
   }
@@ -82,8 +100,6 @@ jQuery(document).ready(function($) {
     const style = document.createElement('style');
 
     const css = cssForm + cssResult;
-
-    console.log('css', css);
 
     style.type = 'text/css';
     style.id = 'formGenerator';
