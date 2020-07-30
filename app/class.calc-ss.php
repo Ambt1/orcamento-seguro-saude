@@ -974,17 +974,17 @@ class SeguroSaude {
       }
     }
 
-    $content = '';
+    $content = array();
     foreach ($tables as $table) {
       if (self::formatSQLDB($table)) {
-        $content .= self::formatSQLDB($table);
+        $content['tables'][] .= self::formatSQLDB($table);
       }
     }
 
     header('Content-Type: application/octet-stream');   
     header("Content-Transfer-Encoding: Binary"); 
-    header("Content-disposition: attachment; filename='backup-data.amb1'");  
-    echo $content;
+    header("Content-disposition: attachment; filename=backup-data.amb1");  
+    echo json_encode($content);
     exit();
     wp_die();
   }
@@ -1004,9 +1004,9 @@ class SeguroSaude {
       self::truncateDB();
       self::installTables();
       $raw_file = file_get_contents($_FILES['import_data']['tmp_name']);
-      $queries = explode(" -------- ", $raw_file);
+      $queries = json_decode( $raw_file );
 
-      foreach ($queries as $query) {
+      foreach ($queries->tables as $query) {
         if (!empty($query)) {
           $splitQuery = explode("INSERT INTO ", $query);
           $query = "INSERT INTO " . $wpdb->prefix . $splitQuery[1];
@@ -2187,7 +2187,7 @@ public static function formatSQLDB($table)
         $sqlTableValues .= "),";
       }
       // cleaning last string
-      $sqlTableValues =  str_replace(",)", ")", substr_replace($sqlTableValues, ';', strlen($sqlTableValues) - 1)) . ' -------- ';
+      $sqlTableValues =  str_replace(",)", ")", substr_replace($sqlTableValues, ';', strlen($sqlTableValues) - 1));
       /**********************************************
       *
       *    Export Text Table
