@@ -15,6 +15,7 @@ class SeguroSaude {
   {
     if (!get_option('calc_ss_version')) {
       self::installTables();
+      self::createRole();
       add_option('calc_ss_version', CALC_SS_VERSION);
     }
   }
