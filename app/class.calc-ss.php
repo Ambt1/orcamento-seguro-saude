@@ -534,6 +534,15 @@ class SeguroSaude {
     $categories = self::getCategory();
     $ages = self::getAges();
     $plans = self::getPlans();
+    $redirectHtml = '';
+    /**********************************************
+    *    Check redirect option
+    **********************************************/
+    if (get_option( 'ss-amb1-redirect' )) {
+      $redirectTo = unserialize(get_option( 'ss-amb1-redirect' ));
+      $redirectLink = get_post_permalink( $redirectTo['postTypeID'] );
+      $redirectHtml = '<input type="hidden" id="ss_amb1_redirect_page" name="ss_amb1_redirect_page" value="'.$redirectLink.'">';
+    }
 
     /**********************************************
     *    HTML INPUTS
@@ -570,9 +579,13 @@ class SeguroSaude {
 
     $submit = '<input class="button-primary" type="submit" name="Example" value="'.$buttonText.'" />';
 
-    $html = '<div class="ss-amb1--wrapper"><form name="ss-amb1-form" action="POST" class="ss-amb1--form__wrapper"><legend class="ss-amb1-legend">'.$formTitle.'</legend>'.$htmlName.$htmlEmail.$htmlPhone.$htmlSelect.$htmlPlans.$htmlAges.$submit.'</form></div>';
+    $html = '<div class="ss-amb1--wrapper"><form name="ss-amb1-form" action="POST" class="ss-amb1--form__wrapper"><legend class="ss-amb1-legend">'.$formTitle.'</legend>'.$htmlName.$htmlEmail.$htmlPhone.$htmlSelect.$htmlPlans.$htmlAges.$redirectHtml.$submit.'</form></div>';
 
     return $html;
+  }
+
+  public static function shortcodeResults($atts){
+    return '<div class="ss-amb1-results-page"></div>';
   }
 
   public static function shortcodePriceTable($atts) 
@@ -916,17 +929,40 @@ class SeguroSaude {
     $redirect = $_POST['redirect'];
     switch ($action) {
       case "config_step1":
+
       if (isset($_POST['config-msg-leads'])) {
         $msgLeads = trim($_POST['config-msg-leads']);
         update_option('ss-amb1-msg-leads', $msgLeads);
       }
+
       if (isset($_POST['config-feform-success'])) {
         update_option('ss-amb1-feform-success', $_POST['config-feform-success']);
       }
+
       if (isset($_POST['config-email'])) {
         $configEmail = explode("\n", trim($_POST['config-email']));
         $emails = join(',', $configEmail);
         update_option('ss-amb1-sys-emails', $emails); 
+      }
+
+      if (isset($_POST['postType']) && $_POST['postType'] == 'pagesList') {
+        $options = array(
+          'postType' => $_POST['postType'],
+          'postTypeID' => $_POST['pagesList']
+        );
+        update_option( 'ss-amb1-redirect', serialize($options) );
+      }
+
+      if (isset($_POST['postType']) && $_POST['postType'] == 'postList') {
+        $options = array(
+          'postType' => $_POST['postType'],
+          'postTypeID' => $_POST['postList']
+        );
+        update_option( 'ss-amb1-redirect', serialize($options) );
+      }
+
+      if (!array_key_exists('showPostType', $_POST)) {
+        delete_option( 'ss-amb1-redirect' );
       }
 
       break;
@@ -1822,6 +1858,7 @@ class SeguroSaude {
     add_action('admin_post_export_data', array('SeguroSaude', 'exportData') );
     add_action('admin_post_import_data', array('SeguroSaude', 'importData') );
     add_shortcode('seguro-saude', array('SeguroSaude', 'shortcodeForm'));
+    add_shortcode('seguro-saude-resultado', array('SeguroSaude', 'shortcodeResults'));
     add_shortcode('plano-valores', array('SeguroSaude', 'shortcodePriceTable'));
     /**********************************************
     *
