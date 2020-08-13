@@ -1,4 +1,4 @@
-jQuery(document).ready(function($) {
+jQuery(document).ready(function($) {     
   let __line_id = '';
   let __modalidades = '';
 
@@ -104,6 +104,48 @@ jQuery(document).ready(function($) {
         console.log("error",a,e);
       });
   });
+
+  $("#postType").on("change", function(){
+      const data = {
+        action: 'load_content',
+        post_type: $(this).val()
+      }
+      $.ajax({
+        url: ajaxurl ,
+        type: 'POST',
+        dataType: 'JSON', data: data,
+      })
+      .done(function(response) {
+        console.log(response);
+        $("#resultBox #post_type_item").remove();
+        const p  = document.createElement('p');
+        const select = document.createElement('select');
+        select.id = "post_type_item";
+        select.name = "post_type_item";
+        select.style.width = "100%";
+        if (response.length > 0) {
+          const options = response.map(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.innerText = item.title;
+            return option;
+          });
+
+          for (option of options) {
+            select.append(option);
+          }
+
+          p.append(select);
+
+          $("#resultBox .inside").append(p);
+        }
+
+      })
+      .fail(function(a,e) {
+        alert("Houve um problema com a aplicação. Consulte o desenvolvedor");
+        console.log("error",a,e);
+      });
+  })
   
   /**********************************************
   *

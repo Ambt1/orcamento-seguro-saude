@@ -47,7 +47,7 @@ jQuery(document).ready(function($) {
           pageQueryString.set('ss_amb1', btoa(JSON.stringify(urlObj)));
           page.search = pageQueryString.toString();
           page = page.toString();
-          window.location = page;
+          window.location = response.redirect;
         } else {
           const html = buildResultPage(response.data, response.msg);
           $(".ss-amb1--form__wrapper").fadeOut('slow', function(){

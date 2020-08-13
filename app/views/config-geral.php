@@ -31,7 +31,7 @@
         </label>
       </div>
       <div id="postListContainerWrapper" class="">
-        <h3>Selecione o destino do formulário</h3>
+        <h3>Selecione o destino padrão do formulário</h3>
         <span>
           <input type="radio" id="postTypePagina" name="postType" value="pagesList" <?php ($redirectOption) ? checked( $redirectOption['postType'], 'pagesList' ) : '' ?>>
           <label for="postTypePagina">Página</label>
