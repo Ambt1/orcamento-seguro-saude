@@ -106,6 +106,35 @@
           </div>
         </div>
       </div>
+
+      <div id="resultBox" class="meta-box-sortables">
+        <div class="postbox">
+          <div class="handlediv" title="Click to toggle"><br></div>
+          <h2 class="hndle">
+            <span>Página de Resultado</span>
+          </h2>
+          <div class="inside">
+            <p>Selecione a página de resultado para onde este plano deve aparecer.</p>
+            <p>
+              <select name="postType" id="postType" style="width: 100%;">
+                <option selected value="">Selecione</option>
+                <option <?php selected( $prepared['redirect_type'], 'post'); ?> value="post">Post</option>
+                <option <?php selected( $prepared['redirect_type'], 'page'); ?> value="page">Página</option>
+              </select>
+            </p>
+            <?php if (isset($prepared['redirect_posts'])) : ?>
+              <p>
+                <select name="post_type_item" id="post_type_item" style="width: 100%;">
+                  <option selected value="">Selecione</option>
+                  <?php foreach ($prepared['redirect_posts'] as $rpost) : ?>
+                    <option <?php selected( $result['redirect_to']->ID, $rpost['id'] ); ?> value="<?php echo $rpost['id']; ?>"><?php echo $rpost['title']; ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </p>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   <br class="clear">

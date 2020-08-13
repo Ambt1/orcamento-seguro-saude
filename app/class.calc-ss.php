@@ -191,6 +191,14 @@ class SeguroSaude {
       $newPlans['plan_id'] = $parsed['plan_id'];
     }
 
+    if (array_key_exists('post_type_item', $parsed)) {
+      $newPlans['post_type_item'] = $parsed['post_type_item'];
+    }
+
+    if (array_key_exists('postType', $parsed)) {
+      $newPlans['postType'] = $parsed['postType'];
+    }
+
     if (array_key_exists('plano_categoria_to_delete', $parsed)) {
       $newPlans['plano_categoria_to_delete'] = $parsed['plano_categoria_to_delete'];
     }
@@ -334,6 +342,36 @@ class SeguroSaude {
     }
 
     wp_die();
+  }
+
+  public static function ajaxLoadPlan(){
+    $postType = $_POST['post_type'];
+      /*
+       * The WordPress Query class.
+       *
+       * @link http://codex.wordpress.org/Function_Reference/WP_Query
+       */
+      $args = array(
+        'post_type'   => $postType,
+        'post_status' => 'publish',
+        'posts_per_page'         => 999
+      );
+    
+    $query = new WP_Query( $args );
+
+    if ($query->have_posts()) {
+      $posts = array();
+      while($query->have_posts()) : $query->the_post();
+        array_push($posts, array(
+          "id" => get_the_ID(),
+          "title" => get_the_title()
+        ));
+      endwhile;
+      wp_reset_query();
+      
+      echo json_encode($posts);
+    }
+    die();
   }
 
   public static function shortcodeForm($atts)
@@ -653,6 +691,7 @@ class SeguroSaude {
       "email" => $parsed['ss-amb1-email'],
       "phone" => $parsed['ss-amb1-phone'],
       "adesao" => $parsed['ss-amb1-modalidades-categoria'],
+      "plano_id" => $parsed['ss-amb1-modalidades-plano'],
       "ages" => $parsed['ss-amb1-age'],
       "responsible" => self::randomUser()
     );
@@ -731,7 +770,21 @@ class SeguroSaude {
     if (empty($filtered)) {
       $result = array("status" => false, "msg" => "Não conseguimos encontrar um plano com esta configuração."); 
     } else {
-      $result = array("status" => true, "msg" => (get_option('ss-amb1-feform-success')) ? get_option('ss-amb1-feform-success') : '', "data" => $filtered);
+
+      $permalink = '';
+      if (get_option( 'ss_plan_'.$data['plan_id'].'_redirect_to' ) ) {
+        $permalink = get_permalink( get_post( intval(get_option( 'ss_plan_'.$data['plan_id'].'_redirect_to' ) ) ) );
+      } elseif(get_option( 'ss-amb1-redirect' )) {
+        $rdt = unserialize(get_option( 'ss-amb1-redirect' ));
+        $permalink = get_permalink( get_post( $rdt['postTypeID'] ) );
+      }
+
+      $result = array(
+        "status" => true, 
+        "msg" => (get_option('ss-amb1-feform-success')) ? get_option('ss-amb1-feform-success') : '', 
+        "data" => $filtered,
+        "redirect" => $permalink
+      );
     }
     echo json_encode($result);
     wp_die();
@@ -1310,7 +1363,17 @@ class SeguroSaude {
     );
     $types = array('%s', '%s', '%s', '%d', '%s', '%d', '%d');
     if ($wpdb->insert($table, $fields, $types)) {
-      return $result = array("status" => true, "msg" => "Item incluído com sucesso",  "id" => $wpdb->insert_id, "data" => $fields);
+      $permalink = '';
+      if (get_option( 'ss_plan_'.$data['plano_id'].'_redirect_to' ) ) {
+        $permalink = get_permalink( get_post( intval(get_option( 'ss_plan_'.$data['plano_id'].'_redirect_to' ) ) ) );
+      }
+      return $result = array(
+        "status" => true, 
+        "msg" => "Item incluído com sucesso",  
+        "id" => $wpdb->insert_id, 
+        "data" => $fields,
+        "redirect" => $permalink
+      );
     } else {
       return $result = array("status" => false, "msg" => "Houve um erro ao adicionar os dados finais 3");
     }
@@ -1320,6 +1383,8 @@ class SeguroSaude {
   {
     global $wpdb;
     $result = array();
+    // var_dump($data);
+    // exit();
     /**********************************************
     *
     *    INSERT PLAN
@@ -1336,6 +1401,20 @@ class SeguroSaude {
     $types = array('%s', '%s', '%d');
     $wpdb->insert($table, $fields, $types);
     if ($planID = $wpdb->insert_id) {
+      
+      /**********************************************
+      *
+      *    INSERT PLANO RESULT PAGE OPTION
+      *
+      **********************************************/
+      if (isset($data['postType'])) {
+        update_option( 'ss_plan_'.$planID.'_post_type', $data['postType'] );
+      }
+
+      if (isset($data['post_type_item'])) {
+        update_option( 'ss_plan_'.$planID.'_redirect_to', $data['post_type_item'] );
+      }
+
       /**********************************************
       *
       *    INSERT MODALIDADES
@@ -1481,6 +1560,19 @@ class SeguroSaude {
     $types = array('%s','%s','%d', '%s');
 
     if ( $wpdb->update($table, $fields, array('ID' => intval($data['plan_id'])), $types, array('%d')) ) {
+      
+      /**********************************************
+      *
+      *    UPDATE PLANO RESULT PAGE OPTION
+      *
+      **********************************************/
+      if (isset($data['postType'])) {
+        update_option( 'ss_plan_'.$data['plan_id'].'_post_type', $data['postType'] );
+      }
+      
+      if (isset($data['post_type_item'])) {
+        update_option( 'ss_plan_'.$data['plan_id'].'_redirect_to', $data['post_type_item'] );
+      }
       /**********************************************
       *
       *    UPDATE MODALIDADES
@@ -1815,6 +1907,7 @@ class SeguroSaude {
     add_action('wp_ajax_delete_item', array('SeguroSaude', 'ajaxNewPlan') );
     add_action('wp_ajax_edit_item', array('SeguroSaude', 'ajaxNewPlan') );
     add_action('wp_ajax_get_item', array('SeguroSaude', 'ajaxNewPlan') );
+    add_action('wp_ajax_load_content', array('SeguroSaude', 'ajaxLoadPlan') );
     add_action('admin_post_config_step1', array('SeguroSaude', 'configForm') );
     add_action('admin_post_export_leads', array('SeguroSaude', 'leadsExport') );
     add_action('admin_post_edit_leads', array('SeguroSaude', 'leadsEdit') );

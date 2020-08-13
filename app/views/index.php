@@ -211,11 +211,41 @@ if (isset($_GET['page'])) {
           $result['ages_list']['age_min'] = $age_min_arr;
           $result['ages_list']['age_max'] = $age_max_arr;
 
-          $prepared = $result;
+          //////////////////////////// 
+          // 
+          // GET REDIRECT PAGE
+          // 
+          ////////////////////////////
+          if (get_option( 'ss_plan_'.$plan_id.'_post_type' )) {
+            $posts = array();
+            $result['redirect_type'] = get_option( 'ss_plan_'.$plan_id.'_post_type' );
 
-          // echo '<pre>';
-          // var_dump($prepared);
-          // echo '</pre>';
+            $args = array(
+              'post_type'   => $result['redirect_type'] ,
+              'post_status' => 'publish',
+              'posts_per_page'         => 999
+            );
+            
+            $query = new WP_Query( $args );
+
+            if ($query->have_posts()) {
+              while ($query->have_posts()) : $query->the_post();
+                array_push($posts, array(
+                  "id" => get_the_ID(),
+                  "title" => get_the_title()
+                ));
+              endwhile;
+            }
+            
+            $result['redirect_posts'] = $posts;
+
+          }
+
+          if (get_option( 'ss_plan_'.$plan_id.'_redirect_to' )) {
+            $result['redirect_to'] = get_post( intval( get_option( 'ss_plan_'.$plan_id.'_redirect_to' ) ) );
+          }
+
+          $prepared = $result;
 
           echo '<script> const __objSS = ' . json_encode($prepared) . '</script>';
 
