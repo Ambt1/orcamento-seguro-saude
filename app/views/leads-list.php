@@ -55,7 +55,7 @@
         <td class="" data-colname="Email"><?php echo $item->status; ?></td>
         <?php if (current_user_can('administrator')): ?>
           <td class="">
-            <?php echo get_user_by( 'id', $item->corretor_id )->data->user_nicename; ?>
+            <?php echo get_user_by( 'id', $item->responsible )->data->user_nicename; ?>
           </td>
         <?php endif; ?> 
         <td class="" data-colname="Data"><?php echo date('d/m/Y', strtotime($item->created_at)); ?></td>    

@@ -12,10 +12,6 @@ gulp.task('copy', function() {
 
 gulp.task('watch', function(){
 	gulp.watch('app/**/*.*', ['copy']) ;
-  // gulp.watch(sourceFiles, function(){
-  //   gulp.src(sourceFiles)
-  //     .pipe(gulp.dest(distFiles));
-  // })
 });
 
 gulp.task('build', function(){

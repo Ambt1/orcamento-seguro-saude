@@ -1357,11 +1357,10 @@ class SeguroSaude {
       "telefone" => $data["phone"],
       "categorias_id" => $data["adesao"],
       "ages_selected" => serialize($data["ages"]),
-      "responsible" => $data["responsible"],
-      "corretor_id" => $corretor['id'],
+      "responsible" => $corretor['id'],
       'created_at' => current_time( 'mysql' )
     );
-    $types = array('%s', '%s', '%s', '%d', '%s', '%d', '%d');
+    $types = array('%s', '%s', '%s', '%d', '%s', '%d', '%s');
     if ($wpdb->insert($table, $fields, $types)) {
       $permalink = '';
       if (get_option( 'ss_plan_'.$data['plano_id'].'_redirect_to' ) ) {
@@ -1701,11 +1700,12 @@ class SeguroSaude {
     $result = array();
     $table = $wpdb->prefix . 'calc_ss_leads';
     $fields = array(
-      "status_id" => $data["status"],
-      "corretor_id" => $data["corretor"],
+      "status_id" => intval($data["status"]),
+      "responsible" => intval($data["corretor"]),
       "obs" => $data["obs"],
     );
-    $types = array('%d', '%s');
+    $types = array('%d', '%d', '%s');
+    
     if ($wpdb->update($table, $fields, array('id' => $data['id']), $types, array('%d'))) {
       return $result = array("status" => true, "msg" => "Item editado com sucesso", "data" => $fields);
     } else {

@@ -44,6 +44,8 @@
                 </select>
                 <br>
               </dd>
+            <?php else: ?>
+              <input type="hidden" name="current-corretor" id="current-corretor" value="<?php echo get_current_user_id(); ?>">
             <?php endif; ?>
             <dt>Observações</dt>
             <dd>

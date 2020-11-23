@@ -279,14 +279,26 @@ if (isset($_GET['page'])) {
                 $leads.created_at,
                 $leads.ages_selected,
                 $leads.status_id as 'status',
-                $leads.corretor_id as 'corretor',
+                $leads.responsible as 'corretor',
                 $leads.obs,
                 $categories.name as 'modalidade'
                 FROM $leads
                 INNER JOIN $categories ON $leads.categorias_id = $categories.id
                 WHERE $leads.id = $id";
         $lead = $wpdb->get_row($sql);
-        require('leads-details.php');
+        //
+        // Checa se o corretor tem permissão pra ver esse lead
+        // 
+        if (
+          user_can( get_current_user_id(), 'manage_options' ) ||
+          !user_can( get_current_user_id(), 'manage_options' ) &&
+          intval($lead->corretor) === get_current_user_id() 
+        ) {
+          require('leads-details.php');
+        } else {
+          echo "Lead não existe mais";
+        }
+        
       } elseif (isset($_GET['action']) && $_GET['action'] == 'delete'){
         $id = sanitize_key( $_GET['id'] );
         $result = deleteLead($id);
@@ -378,7 +390,7 @@ function loadLeadsList($result = null)
             current_user_can('editor') || 
             current_user_can('contributor')) {
           $user_id = get_current_user_id();
-          $where = 'WHERE corretor_id = ' . $user_id;
+          $where = 'WHERE responsible = ' . $user_id;
         } else {
           $where = '';
         }
@@ -430,7 +442,6 @@ function loadLeadsList($result = null)
                 $leads.telefone,
                 $leads.created_at,
                 $leads.responsible,
-                $leads.corretor_id,
                 $categories.name as 'modalidade',
                 $status.name as 'status'
                 FROM $leads
